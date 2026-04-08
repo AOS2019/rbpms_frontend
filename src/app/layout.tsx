@@ -14,42 +14,49 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "RBPMS - Researcher’s Business Performance Management System",
-  description: "An integrated, data-driven platform that automates bridge construction planning, tracks daily site activities, manages resources, and delivers real-time analytics and visual progress insights for railway infrastructure projects",
+  description:
+    "An integrated, data-driven platform that automates bridge construction planning, tracks daily site activities, manages resources, and delivers real-time analytics and visual progress insights for railway infrastructure projects",
 };
-
-// export default function RootLayout({
-//   children,
-// }: Readonly<{
-//   children: React.ReactNode;
-// }>) {
-//   return (
-//     <html
-//       lang="en"
-//       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-//     >
-//       <body className="min-h-full flex flex-col">{children}</body>
-//     </html>
-//   );
-// }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="bg-gray-100">
-        <div className="flex">
-          {/* Sidebar */}
-          <aside className="w-64 bg-white h-screen shadow-md p-4">
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
+      <body className="min-h-screen bg-gray-100 text-gray-800">
+        <div className="flex min-h-screen flex-col lg:flex-row">
+          <aside className="w-full lg:w-64 bg-white shadow-md p-4 lg:h-screen lg:sticky lg:top-0">
             <h1 className="text-xl font-bold mb-6">RBPMS</h1>
-            <nav className="space-y-3 border-t pt-4 text-gray-700">
-              <a href="/dashboard" className="block p-4 bg-gray-100 hover:bg-gray-200">Dashboard</a>
-              <a href="/daily-report" className="block p-4 hover:bg-gray-200">Daily Report</a>
-              <a href="/weekly-plan" className="block p-4 hover:bg-gray-200">Weekly Plan</a>
-              <a href="/visualization" className="block p-4 hover:bg-gray-200">Visualization</a>
+            <nav className="flex flex-wrap gap-2 lg:flex-col lg:gap-0 lg:space-y-3 border-t pt-4 text-gray-700 lg:border-none lg:pt-0">
+              <a
+                href="/dashboard"
+                className="block w-full rounded-md p-3 text-center lg:text-left bg-gray-100 hover:bg-gray-200"
+              >
+                Dashboard
+              </a>
+              <a
+                href="/daily-report"
+                className="block w-full rounded-md p-3 text-center lg:text-left hover:bg-gray-200"
+              >
+                Daily Report
+              </a>
+              <a
+                href="/weekly-plan"
+                className="block w-full rounded-md p-3 text-center lg:text-left hover:bg-gray-200"
+              >
+                Weekly Plan
+              </a>
+              <a
+                href="/visualization"
+                className="block w-full rounded-md p-3 text-center lg:text-left hover:bg-gray-200"
+              >
+                Visualization
+              </a>
             </nav>
           </aside>
 
-          {/* Main Content */}
-          <main className="flex-1 p-6">{children}</main>
+          <main className="flex-1 p-4 md:p-6">{children}</main>
         </div>
       </body>
     </html>
