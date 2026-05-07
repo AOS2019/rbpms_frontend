@@ -1,4 +1,21 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 export default function Dashboard() {
+
+  const [reports, setReports] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/daily-reports')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setReports(data.data);
+        }
+      });
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -117,6 +134,17 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-6">
+          <h1 className="text-xl font-bold mb-4">Daily Reports</h1>
+
+          {reports.map((report) => (
+            <div key={report.id} className="border p-4 mb-3 rounded">
+              <p><strong>Date:</strong> {new Date(report.date).toLocaleDateString()}</p>
+              <p><strong>Engineer:</strong> {report.siteEngineer}</p>
+              <p><strong>Weather:</strong> {report.weather}</p>
             </div>
           ))}
         </div>

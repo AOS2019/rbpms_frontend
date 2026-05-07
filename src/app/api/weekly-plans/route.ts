@@ -1,0 +1,55 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+
+/////////////////////////
+// CREATE DAILY REPORT
+/////////////////////////
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+
+    const report = await prisma.dailyReport.create({
+      data: {
+        date: new Date(body.date),
+        siteEngineer: body.siteEngineer,
+        projectManager: body.projectManager,
+        weather: body.weather,
+        workHours: body.workHours,
+        bridgeId: body.bridgeId,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: report });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Failed to create report' },
+      { status: 500 }
+    );
+  }
+}
+
+/////////////////////////
+// GET DAILY REPORTS
+/////////////////////////
+export async function GET() {
+  try {
+    const reports = await prisma.dailyReport.findMany({
+      include: {
+        activities: true,
+        teams: { include: { tasks: true } },
+        materials: true,
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: reports,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch reports' },
+      { status: 500 }
+    );
+  }
+}
