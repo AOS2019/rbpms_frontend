@@ -40,8 +40,26 @@ export default function DailyReport() {
     };
 
     useEffect(() => {
-        fetch("/api/teams").then((res) => res.json()).then(setTeams);
-        fetch("/api/bridges").then((res) => res.json()).then(setBridges);
+        const fetchData = async () => {
+            try {
+                const teamsRes = await fetch("/api/teams");
+                const teamsData = await teamsRes.json();
+
+                const bridgesRes = await fetch("/api/bridges");
+                const bridgesData = await bridgesRes.json();
+
+                setTeams(teamsData.data || []);
+                setBridges(bridgesData.data || []);
+            } catch (error) {
+                console.error("Fetch error:", error);
+
+                setTeams([]);
+                setBridges([]);
+            }
+        };
+
+        fetchData();
+
         if (rows.length === 0) {
             setRows([
                 {
@@ -56,9 +74,9 @@ export default function DailyReport() {
                 },
             ]);
         }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
     const activityUnitMap: any = {
         Concrete: "m³",
         Reinforcement: "tons",
@@ -220,9 +238,10 @@ export default function DailyReport() {
                                             className={`${standardInputClass} ${row.errors?.bridge ? "border-red-400 ring-1 ring-red-200" : ""}`}
                                         >
                                             <option value="" disabled>Select bridge</option>
-                                            {bridges.map((b: any) => (
+                                            {Array.isArray(bridges) &&
+                                                bridges.map((b: any) => (
                                                 <option key={b.id} value={b.id}>
-                                                    {b.name}
+                                                    {b.location}
                                                 </option>
                                             ))}
                                         </select>

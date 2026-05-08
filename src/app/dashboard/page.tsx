@@ -5,6 +5,18 @@ import { useEffect, useState } from 'react';
 export default function Dashboard() {
 
   const [reports, setReports] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    pk_code: '',
+    location: '',
+    sectionId: null as number | null
+  });
+  const [sections, setSections] = useState([]);
+  useEffect(() => {
+    fetch("/api/sections")
+      .then(res => res.json())
+      .then(data => setSections(data.data || []));
+  }, []);
 
   useEffect(() => {
     fetch('/api/daily-reports')
@@ -31,11 +43,88 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
+              onClick={() => setOpen(true)}
               type="button"
               className="inline-flex w-full justify-center sm:w-auto items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               Add Bridge
             </button>
+            {open && (
+              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4 sm:px-0">
+                <div className="bg-white p-6 rounded w-full max-w-md shadow-lg relative animate-fadeIn flex flex-col gap-4">
+
+                  <h2 className="text-lg font-bold mb-4">Add Bridge</h2>
+
+                  <input
+                    placeholder="PK Code"
+                    className="border p-2 w-full mb-2 uppercase tracking-wide font-mono text-lg font-bold"
+                    onChange={(e) => setForm({ ...form, pk_code: e.target.value })}
+                  />
+
+                  <input
+                    placeholder="Location"
+                    className="border p-2 w-full mb-2 uppercase tracking-wide font-mono text-lg font-bold italic"
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  />
+
+                  <select
+                    value={form.sectionId ?? ''}
+                    className="border p-2 w-full mb-4 uppercase tracking-wide font-mono text-lg font-bold italic"
+                    onChange={(e) => setForm({ ...form, sectionId: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    <option value="">Select Section</option>
+
+                    {sections.map((s: any) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* <input
+                    placeholder="Section ID"
+                    className="border p-2 w-full mb-4 uppercase tracking-wide font-mono text-lg font-bold italic"
+                    onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
+                  /> */}
+
+                  <div className="flex gap-2">
+                    <button
+                      className="bg-gray-300 px-3 py-2 rounded hover:bg-gray-400 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
+                      onClick={() => setOpen(false)}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      className="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:hover:bg-indigo-300"
+                      onClick={async () => {
+                        const res = await fetch('/api/bridges', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(form),
+                        });
+
+                        const data = await res.json();
+
+                        if (data.success) {
+                          setOpen(false);
+
+                          // refresh bridges / KPIs
+                          window.location.reload();
+                        }
+                        if (!form.sectionId) {
+                          alert("Please select a section");
+                          return;
+                        }
+                      }}
+                    >
+                      Save
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+            )}
 
             <button
               type="button"

@@ -1,6 +1,46 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+/**
+ * GET - fetch all daily reports (for dashboard)
+ */
+export async function GET() {
+  try {
+    const reports = await prisma.dailyReport.findMany({
+      include: {
+        bridge: true,
+        activities: true,
+        teams: {
+          include: {
+            tasks: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: reports,
+    });
+  } catch (error) {
+    console.error('GET /api/daily-reports error:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch reports',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST - create new daily report (your existing logic)
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -49,11 +89,18 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, data: report });
+    return NextResponse.json({
+      success: true,
+      data: report,
+    });
   } catch (error) {
-    console.error(error);
+    console.error('POST /api/daily-reports error:', error);
+
     return NextResponse.json(
-      { success: false, error: 'Failed to create report' },
+      {
+        success: false,
+        error: 'Failed to create report',
+      },
       { status: 500 }
     );
   }

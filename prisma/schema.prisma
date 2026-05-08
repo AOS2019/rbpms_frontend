@@ -12,3 +12,103 @@ model User {
   name  String
   email String @unique
 }
+
+model Section {
+  id      Int      @id @default(autoincrement())
+  name    String
+  bridges Bridge[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Element {
+  id     Int     @id @default(autoincrement())
+  name   String
+  type   String?
+  status String?
+
+  activities DailyActivity[]
+
+  bridgeId Int
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
+}
+
+model Bridge {
+  id       Int     @id @default(autoincrement())
+  pk_code  String? @unique
+  location String?
+
+  elements     Element[]
+  dailyReports DailyReport[]
+
+  sectionId Int
+  section   Section @relation(fields: [sectionId], references: [id])
+
+  totalPlanned   Float @default(0)
+  totalCompleted Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DailyReport {
+  id             Int      @id @default(autoincrement())
+  date           DateTime
+  siteEngineer   String
+  projectManager String
+  weather        String
+  workHours      Int
+
+  bridgeId Int
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
+
+  activities DailyActivity[]
+  teams      DailyTeam[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DailyActivity {
+  id Int @id @default(autoincrement())
+
+  dailyReportId Int
+  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
+
+  elementId     Int
+  element       Element @relation(fields: [elementId], references: [id])
+  pierNumber    String?
+  quantityDone  Float
+  unit          String
+  concreteGrade String?
+  status        String
+
+  createdAt DateTime @default(now())
+}
+
+model DailyTeam {
+  id Int @id @default(autoincrement())
+
+  dailyReportId Int
+  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
+
+  teamName String
+
+  tasks DailyTeamTask[]
+
+  createdAt DateTime @default(now())
+}
+
+model DailyTeamTask {
+  id Int @id @default(autoincrement())
+
+  dailyTeamId Int
+  dailyTeam   DailyTeam @relation(fields: [dailyTeamId], references: [id])
+
+  activityId   Int
+  quantityDone Float
+  unit         String
+
+  createdAt DateTime @default(now())
+}
