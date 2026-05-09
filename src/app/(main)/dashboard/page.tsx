@@ -41,7 +41,7 @@ export default function Dashboard() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               onClick={() => setOpen(true)}
               type="button"
@@ -51,7 +51,7 @@ export default function Dashboard() {
             </button>
             {open && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4 sm:px-0">
-                <div className="bg-white p-6 rounded w-full max-w-md shadow-lg relative animate-fadeIn flex flex-col gap-4">
+                <div className="bg-white p-6 rounded w-full max-w-md shadow-lg relative animate-fadeIn flex flex-col gap-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
 
                   <h2 className="text-lg font-bold mb-4">Add Bridge</h2>
 
@@ -81,16 +81,16 @@ export default function Dashboard() {
                     ))}
                   </select>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <button
-                      className="bg-gray-300 px-3 py-2 rounded hover:bg-gray-400 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
+                      className="w-full sm:w-auto bg-gray-300 px-3 py-2 rounded hover:bg-gray-400 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
                       onClick={() => setOpen(false)}
                     >
                       Cancel
                     </button>
 
                     <button
-                      className="bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:hover:bg-indigo-300"
+                      className="w-full sm:w-auto bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:hover:bg-indigo-300"
                       onClick={async () => {
                         const res = await fetch('/api/bridges', {
                           method: 'POST',
