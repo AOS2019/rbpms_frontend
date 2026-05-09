@@ -4,10 +4,8 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     const bridges = await prisma.bridge.findMany({
-      include: {
-        elements: true,
-        dailyReports: true,
-        section: true,
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -19,24 +17,52 @@ export async function GET() {
     console.error(error);
 
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch bridges' },
+      {
+        success: false,
+        error: 'Failed to fetch bridges',
+      },
       { status: 500 }
     );
   }
 }
 
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
+    if (!body.pk_code || !body.location || !body.sectionId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'All fields are required',
+        },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.bridge.findUnique({
+      where: {
+        pk_code: body.pk_code,
+      },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Bridge PK code already exists',
+        },
+        { status: 400 }
+      );
+    }
 
     const bridge = await prisma.bridge.create({
       data: {
         pk_code: body.pk_code,
         location: body.location,
         sectionId: body.sectionId,
-        totalPlanned: 0,
-        totalCompleted: 0,
+        totalPlanned: Number(body.totalPlanned || 0),
+        totalCompleted: Number(body.totalCompleted || 0),
       },
     });
 
@@ -48,7 +74,10 @@ export async function POST(req: Request) {
     console.error(error);
 
     return NextResponse.json(
-      { success: false, error: 'Failed to create bridge' },
+      {
+        success: false,
+        error: 'Failed to create bridge',
+      },
       { status: 500 }
     );
   }

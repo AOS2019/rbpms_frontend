@@ -81,12 +81,6 @@ export default function Dashboard() {
                     ))}
                   </select>
 
-                  {/* <input
-                    placeholder="Section ID"
-                    className="border p-2 w-full mb-4 uppercase tracking-wide font-mono text-lg font-bold italic"
-                    onChange={(e) => setForm({ ...form, sectionId: e.target.value })}
-                  /> */}
-
                   <div className="flex gap-2">
                     <button
                       className="bg-gray-300 px-3 py-2 rounded hover:bg-gray-400 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"

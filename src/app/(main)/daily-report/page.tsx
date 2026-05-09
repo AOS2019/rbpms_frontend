@@ -18,6 +18,12 @@ export default function DailyReport() {
     const [teams, setTeams] = useState<string[]>([]);
     const [bridges, setBridges] = useState<any[]>([]);
     const [piers, setPiers] = useState<any[]>([]);
+    // const [form, setForm] = useState({
+    //     pk_code: '',
+    //     location: '',
+    //     sectionId: null as number | null
+    // });
+    // const [sections, setSections] = useState([]);
 
     const validateRows = () => {
         let isValid = true;
@@ -45,11 +51,18 @@ export default function DailyReport() {
                 const teamsRes = await fetch("/api/teams");
                 const teamsData = await teamsRes.json();
 
+                // const sectionsRes = await fetch("/api/sections");
+                // const sectionsData = await sectionsRes.json();
+
                 const bridgesRes = await fetch("/api/bridges");
                 const bridgesData = await bridgesRes.json();
 
-                setTeams(teamsData.data || []);
-                setBridges(bridgesData.data || []);
+                // setTeams(teamsData.data || []);
+                setTeams(Array.isArray(teamsData.data) ? teamsData.data : []);
+                // setBridges(bridgesData.data || []);
+                setBridges(Array.isArray(bridgesData.data) ? bridgesData.data : []);
+                // setSections(sectionsData.data || []);
+                // setSections(Array.isArray(sectionsData.data) ? sectionsData.data : []);
             } catch (error) {
                 console.error("Fetch error:", error);
 
@@ -232,6 +245,7 @@ export default function DailyReport() {
 
                                     <div>
                                         <label className="text-xs text-gray-700">Bridge</label>
+
                                         <select
                                             value={row.bridge}
                                             onChange={(e) => loadPiers(e.target.value, index)}
@@ -241,7 +255,7 @@ export default function DailyReport() {
                                             {Array.isArray(bridges) &&
                                                 bridges.map((b: any) => (
                                                 <option key={b.id} value={b.id}>
-                                                    {b.location}
+                                                    {b.pk_code}
                                                 </option>
                                             ))}
                                         </select>
