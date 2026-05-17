@@ -15,9 +15,16 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+
     const res = await fetch("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
 
     const data = await res.json();
@@ -29,7 +36,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("cpanel/dashboard");
+    // router.replace("/admin/cpanel/dashboard");
+    window.location.href = "/admin/cpanel/dashboard";
   };
 
   return (

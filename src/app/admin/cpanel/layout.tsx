@@ -1,25 +1,191 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Building2,
+  GitBranch,
+  Boxes,
+  Users,
+  LogOut,
+} from "lucide-react";
+
+const navItems = [
+  {
+    name: "Dashboard",
+    href: "/admin/cpanel/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    name: "Sections",
+    href: "/admin/cpanel/sections",
+    icon: Building2,
+  },
+  {
+    name: "Bridges",
+    href: "/admin/cpanel/bridges",
+    icon: GitBranch,
+  },
+  {
+    name: "Elements",
+    href: "/admin/cpanel/elements",
+    icon: Boxes,
+  },
+  {
+    name: "Users",
+    href: "/admin/cpanel/users",
+    icon: Users,
+  },
+];
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+
+        if (!res.ok) {
+          router.replace("/admin");
+          return;
+        }
+
+        setLoading(false);
+      } catch (error) {
+        router.replace("/admin");
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  const logout = async () => {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+    });
+
+    router.replace("/admin");
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+          <p className="text-sm text-gray-500">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r p-4">
-        <h1 className="text-xl font-bold mb-6">RBMPS Admin</h1>
+    <div className="min-h-screen bg-gray-100">
+      {/* Mobile Topbar */}
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b bg-white px-4 py-3 shadow-sm lg:hidden">
+        <div>
+          <h1 className="text-lg font-bold text-gray-800">RBPMS Admin</h1>
+        </div>
 
-        <nav className="space-y-2 text-sm">
-          <a href="/admin/cpanel/dashboard" className="block">Dashboard</a>
-          <a href="/admin/cpanel/sections" className="block">Sections</a>
-          <a href="/admin/cpanel/bridges" className="block">Bridges</a>
-          <a href="/admin/cpanel/elements" className="block">Elements</a>
-          <a href="/admin/cpanel/users" className="block">Users</a>
-        </nav>
-      </aside>
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="rounded-md p-2 hover:bg-gray-100"
+        >
+          {menuOpen ? (
+            <X className="h-6 w-6 text-gray-700" />
+          ) : (
+            <Menu className="h-6 w-6 text-gray-700" />
+          )}
+        </button>
+      </header>
 
-      {/* Main */}
-      <main className="flex-1 p-6">{children}</main>
+      <div className="flex">
+        {/* Sidebar */}
+        <aside
+          className={`
+            fixed inset-y-0 left-0 z-40 w-72 transform border-r bg-white shadow-lg transition-transform duration-300 ease-in-out
+            lg:static lg:translate-x-0 lg:shadow-none
+            ${menuOpen ? "translate-x-0" : "-translate-x-full"}
+          `}
+        >
+          <div className="flex h-full flex-col">
+            {/* Logo */}
+            <div className="border-b px-6 py-5">
+              <h1 className="text-2xl font-bold text-blue-700">
+                RBPMS Admin
+              </h1>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Railway Bridge Management
+              </p>
+            </div>
+
+            {/* Nav */}
+            <nav className="flex-1 space-y-2 px-4 py-5">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+
+                const active = pathname === item.href;
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all
+                      ${
+                        active
+                          ? "bg-blue-600 text-white shadow"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Logout */}
+            <div className="border-t p-4">
+              <button
+                onClick={logout}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-red-700"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* Overlay */}
+        {menuOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className="min-h-screen flex-1 p-4 md:p-6 lg:p-8">
+          <div className="rounded-2xl bg-white p-4 shadow-sm md:p-6">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,29 +1,31 @@
 import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     const body = await req.json();
 
-    const bridge = await prisma.bridge.update({
+    const updatedBridge = await prisma.bridge.update({
       where: {
-        id: Number(params.id),
+        id: Number(id),
       },
       data: {
         pk_code: body.pk_code,
         location: body.location,
-        sectionId: body.sectionId,
-        totalPlanned: Number(body.totalPlanned),
-        totalCompleted: Number(body.totalCompleted),
+        sectionId: Number(body.sectionId),
+        totalPlanned: Number(body.totalPlanned || 0),
+        totalCompleted: Number(body.totalCompleted || 0),
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: bridge,
+      data: updatedBridge,
     });
   } catch (error) {
     console.error(error);
@@ -39,13 +41,15 @@ export async function PUT(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     await prisma.bridge.delete({
       where: {
-        id: Number(params.id),
+        id: Number(id),
       },
     });
 

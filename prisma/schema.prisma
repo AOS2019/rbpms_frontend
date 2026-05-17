@@ -7,14 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TECHNICIAN
+  VIEWER
+}
+
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String?
-  email    String  @unique
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
   password String
-  role     String  @default("admin")
+
+  role Role @default(VIEWER)
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Section {
