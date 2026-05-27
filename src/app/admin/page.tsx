@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
+  // const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,7 +14,6 @@ export default function LoginPage() {
   const login = async () => {
     setLoading(true);
     setError("");
-
 
     const res = await fetch("/api/auth/login", {
       method: "POST",

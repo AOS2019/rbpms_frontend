@@ -153,6 +153,9 @@ export default function BridgesPage() {
             ))}
             </select>
 
+          {/* <label className="pt-3">
+            Total Planned
+          </label> */}
           <input
             type="number"
             placeholder="Total Planned"
@@ -166,6 +169,9 @@ export default function BridgesPage() {
             className="border p-3 rounded-lg"
           />
 
+          {/* <label className="pt-3">
+            Total Completed
+          </label> */}
           <input
             type="number"
             placeholder="Total Completed"

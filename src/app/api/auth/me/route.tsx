@@ -1,10 +1,15 @@
 import { prisma } from '@/lib/prisma';
+import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
 export async function GET(req: NextRequest) {
   try {
-    const token = req.cookies.get('token')?.value;
+
+    const cookieStore = await cookies();
+
+    // const token = req.cookies.get('token')?.value;
+    const token = cookieStore.get("token")?.value;
 
     // No token
     if (!token) {
