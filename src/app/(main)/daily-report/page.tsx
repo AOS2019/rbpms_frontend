@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 interface ActivityRow {
     team: string;
-    bridge: string;
+    bridge: number | string;
     pier: string;
     element: string;
     activity: string;
@@ -17,13 +17,14 @@ export default function DailyReport() {
     const [rows, setRows] = useState<ActivityRow[]>([]);
     const [teams, setTeams] = useState<string[]>([]);
     const [bridges, setBridges] = useState<any[]>([]);
+    // const [sections, setSections] = useState([]);
     const [piers, setPiers] = useState<any[]>([]);
     // const [form, setForm] = useState({
     //     pk_code: '',
     //     location: '',
-    //     sectionId: null as number | null
+    //     bridgeId: null as number | null
     // });
-    // const [sections, setSections] = useState([]);
+    
 
     const validateRows = () => {
         let isValid = true;
@@ -60,7 +61,15 @@ export default function DailyReport() {
                 // setTeams(teamsData.data || []);
                 setTeams(Array.isArray(teamsData.data) ? teamsData.data : []);
                 // setBridges(bridgesData.data || []);
-                setBridges(Array.isArray(bridgesData.data) ? bridgesData.data : []);
+                // setBridges(Array.isArray(bridgesData.data) ? bridgesData.data : []);
+
+                setBridges(
+                    Array.isArray(bridgesData.data)
+                        ? bridgesData.data
+                        : []
+                );
+
+
                 // setSections(sectionsData.data || []);
                 // setSections(Array.isArray(sectionsData.data) ? sectionsData.data : []);
             } catch (error) {
@@ -134,11 +143,35 @@ export default function DailyReport() {
         setRows(newRows);
     };
 
-    const loadPiers = async (bridgeId: string, index: number) => {
-        const res = await fetch(`/api/piers?bridge=${bridgeId}`);
-        const data = await res.json();
-        setPiers(data);
-        updateRow(index, "bridge", bridgeId);
+    const loadPiers = async (
+        bridgeId: string,
+        index: number
+    ) => {
+        try {
+            const res = await fetch(
+                `/api/piers?bridge=${bridgeId}`
+            );
+
+            if (!res.ok) {
+                console.error(
+                    "Failed to load piers:",
+                    await res.text()
+                );
+                return;
+            }
+
+            const data = await res.json();
+
+            if (data.success) {
+                setPiers(data.data || []);
+            } else {
+                setPiers([]);
+            }
+            updateRow(index, "bridge", bridgeId);
+        } catch (error) {
+            console.error(error);
+            setPiers([]);
+        }
     };
 
     const handleSubmit = async () => {
@@ -249,15 +282,23 @@ export default function DailyReport() {
                                         <select
                                             value={row.bridge}
                                             onChange={(e) => loadPiers(e.target.value, index)}
-                                            className={`${standardInputClass} ${row.errors?.bridge ? "border-red-400 ring-1 ring-red-200" : ""}`}
+                                            className={`${standardInputClass} ${
+                                                row.errors?.bridge
+                                                    ? "border-red-400 ring-1 ring-red-200"
+                                                    : ""
+                                            }`}
                                         >
-                                            <option value="" disabled>Select bridge</option>
+                                            <option value="">Select Bridge</option>
+
                                             {Array.isArray(bridges) &&
-                                                bridges.map((b: any) => (
-                                                <option key={b.id} value={b.id}>
-                                                    {b.pk_code}
-                                                </option>
-                                            ))}
+                                                bridges.map((bridge: any) => (
+                                                    <option
+                                                        key={bridge.id}
+                                                        value={bridge.id}
+                                                    >
+                                                        {bridge.pk_code}
+                                                    </option>
+                                                ))}
                                         </select>
                                         {row.errors?.bridge && (
                                             <p className="text-red-600 text-xs mt-1">{row.errors.bridge}</p>
@@ -423,10 +464,14 @@ export default function DailyReport() {
                                                 <option value="" disabled>
                                                     Select bridge
                                                 </option>
-                                                {bridges.map((b: any) => (
-                                                    <option key={b.id} value={b.id}>
-                                                        {b.name}
-                                                    </option>
+                                                {Array.isArray(bridges) &&
+                                                    bridges.map((bridge: any) => (
+                                                        <option
+                                                            key={bridge.id}
+                                                            value={bridge.id}
+                                                        >
+                                                            {bridge.pk_code}
+                                                        </option>
                                                 ))}
                                             </select>
                                             {row.errors?.bridge && (

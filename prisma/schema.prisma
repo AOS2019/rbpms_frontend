@@ -14,6 +14,11 @@ enum Role {
   VIEWER
 }
 
+enum BridgeType {
+  BRIDGE
+  OVERBRIDGE
+}
+
 model User {
   id       Int    @id @default(autoincrement())
   name     String
@@ -47,13 +52,35 @@ model Element {
   bridge   Bridge @relation(fields: [bridgeId], references: [id])
 }
 
+model Pier {
+  id Int @id @default(autoincrement())
+
+  pierNumber String
+
+  bridgeId Int
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
+
+  height      Float?
+  columnCount Int    @default(2)
+
+  shape String?
+
+  createdAt DateTime @default(now())
+
+  columns Column[]
+}
+
 model Bridge {
   id       Int     @id @default(autoincrement())
-  pk_code  String? @unique
+  pk_code  String  @unique
   location String?
+
+  bridgeType BridgeType @default(BRIDGE)
 
   elements     Element[]
   dailyReports DailyReport[]
+
+  piers Pier[]
 
   sectionId Int
   section   Section @relation(fields: [sectionId], references: [id])
@@ -122,6 +149,21 @@ model DailyTeamTask {
   activityId   Int
   quantityDone Float
   unit         String
+
+  createdAt DateTime @default(now())
+}
+
+model Column {
+  id Int @id @default(autoincrement())
+
+  columnNumber String
+
+  pierId Int
+  pier   Pier @relation(fields: [pierId], references: [id])
+
+  shape String?
+
+  height Float?
 
   createdAt DateTime @default(now())
 }
