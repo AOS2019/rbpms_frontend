@@ -24,7 +24,6 @@ async function main() {
     data: {
       name: process.env.ADMIN_NAME!,
       email: process.env.ADMIN_EMAIL!,
-      username: 'admin',
       password,
       role: 'ADMIN',
     },

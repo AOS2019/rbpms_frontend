@@ -37,7 +37,7 @@ export async function GET() {
       include: {
         activities: true,
         teams: { include: { tasks: true } },
-        materials: true,
+        // materials: true,
       },
       orderBy: { date: 'desc' },
     });
