@@ -4,7 +4,122 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  password  String
+  updatedAt DateTime @updatedAt
+  role      Role     @default(VIEWER)
+  name      String
+}
+
+model Section {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bridges   Bridge[]
+}
+
+model Element {
+  id         Int             @id @default(autoincrement())
+  name       String
+  type       String?
+  status     String?
+  bridgeId   Int
+  activities DailyActivity[]
+  bridge     Bridge          @relation(fields: [bridgeId], references: [id])
+}
+
+model Pier {
+  id          Int      @id @default(autoincrement())
+  pierNumber  String
+  bridgeId    Int
+  height      Float?
+  columnCount Int      @default(2)
+  shape       String?
+  createdAt   DateTime @default(now())
+  columns     Column[]
+  bridge      Bridge   @relation(fields: [bridgeId], references: [id])
+}
+
+model Bridge {
+  id             Int           @id @default(autoincrement())
+  location       String?
+  createdAt      DateTime      @default(now())
+  pk_code        String        @unique
+  sectionId      Int
+  totalCompleted Float         @default(0)
+  totalPlanned   Float         @default(0)
+  updatedAt      DateTime      @updatedAt
+  bridgeType     BridgeType    @default(BRIDGE)
+  section        Section       @relation(fields: [sectionId], references: [id])
+  dailyReports   DailyReport[]
+  elements       Element[]
+  piers          Pier[]
+}
+
+model DailyReport {
+  id             Int             @id @default(autoincrement())
+  date           DateTime
+  siteEngineer   String
+  projectManager String
+  weather        String
+  workHours      Int
+  bridgeId       Int
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  activities     DailyActivity[]
+  bridge         Bridge          @relation(fields: [bridgeId], references: [id])
+  teams          DailyTeam[]
+}
+
+model DailyActivity {
+  id            Int         @id @default(autoincrement())
+  dailyReportId Int
+  pierNumber    String?
+  quantityDone  Float
+  unit          String
+  concreteGrade String?
+  status        String
+  createdAt     DateTime    @default(now())
+  elementId     Int
+  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
+  element       Element     @relation(fields: [elementId], references: [id])
+}
+
+model DailyTeam {
+  id            Int             @id @default(autoincrement())
+  dailyReportId Int
+  teamName      String
+  createdAt     DateTime        @default(now())
+  dailyReport   DailyReport     @relation(fields: [dailyReportId], references: [id])
+  tasks         DailyTeamTask[]
+}
+
+model DailyTeamTask {
+  id           Int       @id @default(autoincrement())
+  dailyTeamId  Int
+  activityId   Int
+  quantityDone Float
+  unit         String
+  createdAt    DateTime  @default(now())
+  dailyTeam    DailyTeam @relation(fields: [dailyTeamId], references: [id])
+}
+
+model Column {
+  id           Int      @id @default(autoincrement())
+  columnNumber String
+  pierId       Int
+  shape        String?
+  height       Float?
+  createdAt    DateTime @default(now())
+  pier         Pier     @relation(fields: [pierId], references: [id])
 }
 
 enum Role {
@@ -17,153 +132,4 @@ enum Role {
 enum BridgeType {
   BRIDGE
   OVERBRIDGE
-}
-
-model User {
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-
-  role Role @default(VIEWER)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Section {
-  id      Int      @id @default(autoincrement())
-  name    String
-  bridges Bridge[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Element {
-  id     Int     @id @default(autoincrement())
-  name   String
-  type   String?
-  status String?
-
-  activities DailyActivity[]
-
-  bridgeId Int
-  bridge   Bridge @relation(fields: [bridgeId], references: [id])
-}
-
-model Pier {
-  id Int @id @default(autoincrement())
-
-  pierNumber String
-
-  bridgeId Int
-  bridge   Bridge @relation(fields: [bridgeId], references: [id])
-
-  height      Float?
-  columnCount Int    @default(2)
-
-  shape String?
-
-  createdAt DateTime @default(now())
-
-  columns Column[]
-}
-
-model Bridge {
-  id       Int     @id @default(autoincrement())
-  pk_code  String  @unique
-  location String?
-
-  bridgeType BridgeType @default(BRIDGE)
-
-  elements     Element[]
-  dailyReports DailyReport[]
-
-  piers Pier[]
-
-  sectionId Int
-  section   Section @relation(fields: [sectionId], references: [id])
-
-  totalPlanned   Float @default(0)
-  totalCompleted Float @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model DailyReport {
-  id             Int      @id @default(autoincrement())
-  date           DateTime
-  siteEngineer   String
-  projectManager String
-  weather        String
-  workHours      Int
-
-  bridgeId Int
-  bridge   Bridge @relation(fields: [bridgeId], references: [id])
-
-  activities DailyActivity[]
-  teams      DailyTeam[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model DailyActivity {
-  id Int @id @default(autoincrement())
-
-  dailyReportId Int
-  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
-
-  elementId     Int
-  element       Element @relation(fields: [elementId], references: [id])
-  pierNumber    String?
-  quantityDone  Float
-  unit          String
-  concreteGrade String?
-  status        String
-
-  createdAt DateTime @default(now())
-}
-
-model DailyTeam {
-  id Int @id @default(autoincrement())
-
-  dailyReportId Int
-  dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
-
-  teamName String
-
-  tasks DailyTeamTask[]
-
-  createdAt DateTime @default(now())
-}
-
-model DailyTeamTask {
-  id Int @id @default(autoincrement())
-
-  dailyTeamId Int
-  dailyTeam   DailyTeam @relation(fields: [dailyTeamId], references: [id])
-
-  activityId   Int
-  quantityDone Float
-  unit         String
-
-  createdAt DateTime @default(now())
-}
-
-model Column {
-  id Int @id @default(autoincrement())
-
-  columnNumber String
-
-  pierId Int
-  pier   Pier @relation(fields: [pierId], references: [id])
-
-  shape String?
-
-  height Float?
-
-  createdAt DateTime @default(now())
 }
