@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  parseDailyReportExcel,
+} from "@/lib/excel/dailyReportImporter";
+
+import {
+  exportDailyReportExcel,
+} from "@/lib/excel/dailyReportExporter";
+
+import { useState, useEffect, useRef } from "react";
 
 import DailyReportHeader from "@/components/daily-report/DailyReportHeader";
 
@@ -238,6 +246,7 @@ useEffect(() => {
       }
 
       alert("Report submitted successfully!");
+      window.location.reload();
     } catch (error:any) {
       console.error("POST /api/daily-reports error:", error);
 
@@ -267,11 +276,110 @@ useEffect(() => {
 
   const standardInputClass =
     "w-full p-2 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-200";
+  
+  const fileInputRef =
+  useRef<HTMLInputElement>(null);
+  
+  const handleExcelUpload =
+    async (
+      e: React.ChangeEvent<HTMLInputElement>
+    ) => {
 
+      const file =
+        e.target.files?.[0];
+
+      if (!file) return;
+
+      const rows =
+        await parseDailyReportExcel(file);
+
+      console.log(rows);
+    };
+
+  const handleExportExcel = async () => {
+    try {
+
+      console.log("Export started");
+
+      const workbook =
+        await exportDailyReportExcel({
+          ...generalInfo,
+          manpower: manpowerRows,
+          activities: rows,
+        });
+
+      console.log("Workbook created");
+
+      const buffer =
+        await workbook.xlsx.writeBuffer();
+
+      const blob = new Blob(
+        [buffer],
+        {
+          type:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }
+      );
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+
+      link.download =
+        `Daily_Report_${Date.now()}.xlsx`;
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
+
+      console.log("Download complete");
+
+    } catch (error) {
+      console.error(
+        "Export error:",
+        error
+      );
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <DailyReportHeader />
+        <div className="flex justify-end gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() =>
+              fileInputRef.current?.click()
+            }
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
+          >
+            Upload Excel
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx"
+            onChange={handleExcelUpload}
+            className="hidden"
+          />
+          <button
+            onClick=
+            {handleExportExcel}
+            
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Export Excel
+          </button>
+        </div>
 
         <DailyReportGeneralInfo
           selectedBridgeId={selectedBridgeId}

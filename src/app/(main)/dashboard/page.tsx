@@ -145,23 +145,53 @@ export default function Dashboard() {
         <div className="p-6">
           <h1 className="text-xl font-bold mb-4">Daily Reports</h1>
 
-          {reports.map((report) => (
-            <div key={report.id} className="border p-4 mb-3 rounded">
-              <p><strong>Date:</strong> {new Date(report.date).toLocaleDateString()}</p>
-              <p><strong>Engineer:</strong> {report.siteEngineer}</p>
-              <p><strong>Weather:</strong> {report.weather}</p>
-              <p><strong>Work Hours:</strong> {report.workHours}</p>
-              <p><strong>Bridge:</strong> {report.bridge.name}</p>
-              <h3 className="font-semibold mt-3">Activities:</h3>
-              <ul className="list-disc list-inside">
-                {report.activities.map((act: any) => (
-                  <li key={act.id}>
-                    {act.activity.name} - {act.quantityDone} {act.unit} (Grade: {act.concreteGrade})
-                  </li>
+          <div className="overflow-x-auto bg-white rounded-lg border border-gray-100 p-4">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr className="text-left text-sm text-gray-600">
+                  <th className="py-2 px-3">Date</th>
+                  <th className="py-2 px-3">Engineer</th>
+                  <th className="py-2 px-3">Weather</th>
+                  <th className="py-2 px-3">Work Hours</th>
+                  <th className="py-2 px-3">Bridge</th>
+                  <th className="py-2 px-3">Activities</th>
+                  <th className="py-2 px-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {reports.map((report) => (
+                  <tr key={report.id} className="text-sm text-gray-700">
+                    <td className="py-3 px-3 align-top">{new Date(report.date).toLocaleDateString()}</td>
+                    <td className="py-3 px-3 align-top">{report.siteEngineer}</td>
+                    <td className="py-3 px-3 align-top">{report.weather}</td>
+                    <td className="py-3 px-3 align-top">{report.workHours}</td>
+                    <td className="py-3 px-3 align-top">{report.bridge?.name}</td>
+                    <td className="py-3 px-3 align-top">
+                      <ul className="list-disc list-inside">
+                        {report.activities.map((act: any) => (
+                          <li key={act.id}>
+                            {act.activity?.name} - {act.quantityDone} {act.unit} {act.concreteGrade ? `(Grade: ${act.concreteGrade})` : null}
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td>
+                      <button
+                        onClick={() =>
+                          window.open(
+                            `/api/daily-reports/${report.id}/excel`
+                          )
+                        }
+                        className="bg-blue-300 text-white px-3 py-2 rounded hover:bg-blue-600"
+                      >
+                        Download Excel
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            </div>
-          ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

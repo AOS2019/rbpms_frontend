@@ -2,11 +2,9 @@
   "name": "rbpms",
   "version": "0.1.0",
   "private": true,
-
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
-  
   "scripts": {
     "dev": "next dev",
     "postinstall": "prisma generate",
@@ -22,6 +20,8 @@
     "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.16.0",
@@ -29,10 +29,12 @@
     "next-auth": "^4.24.14",
     "pg": "^8.20.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/file-saver": "^2.0.7",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.19.39",
     "@types/react": "^19",
