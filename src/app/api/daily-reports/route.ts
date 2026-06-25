@@ -10,11 +10,7 @@ export async function GET() {
       include: {
         bridge: true,
         activities: true,
-        teams: {
-          include: {
-            tasks: true,
-          },
-        },
+        dailyTeamTasks: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -43,49 +39,83 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
+    const quantityRequiredActivities = [
+      "casting",
+      "blinding",
+      "installation",
+      "assembly",
+    ];
+
     const body = await req.json();
 
     const report = await prisma.dailyReport.create({
       data: {
         date: new Date(body.date),
         siteEngineer: body.siteEngineer,
+        foreman: body.foreman,
         projectManager: body.projectManager,
         weather: body.weather,
-        workHours: body.workHours,
-        bridgeId: body.bridgeId,
+
+        bridge: {
+          connect: {
+            id: body.bridgeId,
+          },
+        },
 
         activities: {
           create: body.activities.map((act: any) => ({
-            bridgeElementId: act.bridgeElementId,
-            activityId: act.activityId,
-            pierNumber: act.pierNumber,
-            quantityDone: act.quantityDone,
-            unit: act.unit,
-            concreteGrade: act.concreteGrade,
-            status: act.status,
+
+            activity: act.activity,
+
+            team: {
+              connect: {
+                id: Number(act.teamId),
+              },
+            },
+
+            bridge: {
+              connect: {
+                id: Number(body.bridgeId),
+              },
+            },
+
+            pierNumber: act.pier || null,
+
+            quantityDone: 
+              act.quantity && act.quantity > 0
+              ? Number(act.quantity)
+              : null,
+            unit: act.unit || '',
+            concreteGrade: act.concreteGrade || null,
+            status: 'pending',
+
+            ...(act.elementId
+              ? {
+                  element: {
+                    connect: {
+                      id: Number(act.elementId),
+                    },
+                  },
+                }
+              : {}
+            ),
           })),
         },
 
-        teams: {
-          create: body.teams.map((team: any) => ({
-            teamName: team.name,
-            tasks: {
-              create: team.tasks.map((task: any) => ({
-                activityId: task.activityId,
-                quantityDone: task.quantity,
-                unit: task.unit,
-              })),
-            },
+        dailyTeamTasks: {
+          create: (body.manpower || []).map((task: any) => ({
+            employeeId: task.employeeId,
+            teamId: task.teamId,
+            bridgeId: body.bridgeId,
+            equipmentId: task.equipmentId,
+            hoursWorked: task.hoursWorked,
+            remarks: task.remarks,
           })),
         },
       },
       include: {
         activities: true,
-        teams: {
-          include: {
-            tasks: true,
-          },
-        },
+        dailyTeamTasks: true,
       },
     });
 
@@ -93,8 +123,23 @@ export async function POST(req: Request) {
       success: true,
       data: report,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('POST /api/daily-reports error:', error);
+
+     // Database unavailable
+    if (
+      error?.code === "P1001" ||
+      error?.name === "PrismaClientInitializationError"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Database connection is temporarily unavailable. Please try again in a few moments.",
+        },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json(
       {
