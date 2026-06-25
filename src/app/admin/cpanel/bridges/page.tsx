@@ -5,9 +5,20 @@ import { useEffect, useState } from 'react';
 export default function BridgesPage() {
   const [bridges, setBridges] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-   const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState([]);
+  const bridgeTypes = [
+    {
+      value: "BRIDGE",
+      label: "Bridge",
+    },
+    {
+      value: "OVERBRIDGE",
+      label: "Overbridge",
+    },
+  ];
   const [form, setForm] = useState({
     pk_code: '',
+    bridgeType: '',
     location: '',
     sectionId: 0,
     totalPlanned: 0,
@@ -61,6 +72,7 @@ export default function BridgesPage() {
 
       setForm({
         pk_code: '',
+        bridgeType: '',
         location: '',
         sectionId: 0,
         totalPlanned: 0,
@@ -82,6 +94,7 @@ export default function BridgesPage() {
 
     setForm({
       pk_code: bridge.pk_code,
+      bridgeType: bridge.bridgeType,
       location: bridge.location,
       sectionId: bridge.sectionId,
       totalPlanned: bridge.totalPlanned,
@@ -122,6 +135,24 @@ export default function BridgesPage() {
             }
             className="border p-3 rounded-lg"
           />
+
+          <select
+            value={form.bridgeType}
+            className="border p-3 rounded-lg"
+            onChange={(e) =>
+                setForm({
+                ...form,
+                bridgeType: e.target.value,
+                })
+            }
+            >
+            <option value="">Select Bridge Type</option>
+            {bridgeTypes.map((bridgeType) => (
+                <option key={bridgeType.value} value={bridgeType.value}>
+                {bridgeType.label}
+                </option>
+            ))}
+            </select>
 
           <input
             placeholder="Location"
@@ -200,6 +231,7 @@ export default function BridgesPage() {
           <thead className="bg-gray-100">
             <tr>
               <th className="p-4 text-left">PK Code</th>
+              <th className="p-4 text-left">Bridge Type</th>
               <th className="p-4 text-left">Location</th>
               <th className="p-4 text-left">Section</th>
               <th className="p-4 text-left">Completion</th>
@@ -225,6 +257,10 @@ export default function BridgesPage() {
                 >
                   <td className="p-4">
                     {bridge.pk_code}
+                  </td>
+
+                  <td className="p-4">
+                    {bridge.bridgeType}
                   </td>
 
                   <td className="p-4">

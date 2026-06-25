@@ -12,10 +12,12 @@ export async function POST(req: NextRequest) {
       data: {
         date: new Date(body.date),
         siteEngineer: body.siteEngineer,
+        foreman: body.foreman,
         projectManager: body.projectManager,
         weather: body.weather,
-        workHours: body.workHours,
         bridgeId: body.bridgeId,
+        activities: body.activities,
+        dailyTeamTasks: body.dailyTeamTasks,
       },
     });
 
@@ -36,7 +38,7 @@ export async function GET() {
     const reports = await prisma.dailyReport.findMany({
       include: {
         activities: true,
-        teams: { include: { tasks: true } },
+        dailyTeamTasks: true,
         // materials: true,
       },
       orderBy: { date: 'desc' },

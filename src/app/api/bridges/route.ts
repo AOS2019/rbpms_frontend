@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const bridges = await prisma.bridge.findMany({
       orderBy: {
-        createdAt: 'desc',
+        pk_code: 'desc',
       },
     });
 

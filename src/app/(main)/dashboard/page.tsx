@@ -43,84 +43,6 @@ export default function Dashboard() {
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
-              onClick={() => setOpen(true)}
-              type="button"
-              className="inline-flex w-full justify-center sm:w-auto items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              Add Bridge
-            </button>
-            {open && (
-              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4 sm:px-0">
-                <div className="bg-white p-6 rounded w-full max-w-md shadow-lg relative animate-fadeIn flex flex-col gap-4 max-h-[calc(100vh-4rem)] overflow-y-auto">
-
-                  <h2 className="text-lg font-bold mb-4">Add Bridge</h2>
-
-                  <input
-                    placeholder="PK Code"
-                    className="border p-2 w-full mb-2 uppercase tracking-wide font-mono text-lg font-bold"
-                    onChange={(e) => setForm({ ...form, pk_code: e.target.value })}
-                  />
-
-                  <input
-                    placeholder="Location"
-                    className="border p-2 w-full mb-2 uppercase tracking-wide font-mono text-lg font-bold italic"
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  />
-
-                  <select
-                    value={form.sectionId ?? ''}
-                    className="border p-2 w-full mb-4 uppercase tracking-wide font-mono text-lg font-bold italic"
-                    onChange={(e) => setForm({ ...form, sectionId: e.target.value ? Number(e.target.value) : null })}
-                  >
-                    <option value="">Select Section</option>
-
-                    {sections.map((s: any) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <button
-                      className="w-full sm:w-auto bg-gray-300 px-3 py-2 rounded hover:bg-gray-400 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:hover:bg-gray-300"
-                      onClick={() => setOpen(false)}
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      className="w-full sm:w-auto bg-indigo-600 text-white px-3 py-2 rounded hover:bg-indigo-700 transition duration-150 flex items-center gap-1 justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:hover:bg-indigo-300"
-                      onClick={async () => {
-                        const res = await fetch('/api/bridges', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(form),
-                        });
-
-                        const data = await res.json();
-
-                        if (data.success) {
-                          setOpen(false);
-
-                          // refresh bridges / KPIs
-                          window.location.reload();
-                        }
-                        if (!form.sectionId) {
-                          alert("Please select a section");
-                          return;
-                        }
-                      }}
-                    >
-                      Save
-                    </button>
-                  </div>
-
-                </div>
-              </div>
-            )}
-
-            <button
               type="button"
               className="inline-flex w-full justify-center sm:w-auto items-center px-3 py-2 bg-white border border-gray-200 text-sm text-gray-700 rounded-md hover:bg-gray-50"
             >
@@ -228,6 +150,16 @@ export default function Dashboard() {
               <p><strong>Date:</strong> {new Date(report.date).toLocaleDateString()}</p>
               <p><strong>Engineer:</strong> {report.siteEngineer}</p>
               <p><strong>Weather:</strong> {report.weather}</p>
+              <p><strong>Work Hours:</strong> {report.workHours}</p>
+              <p><strong>Bridge:</strong> {report.bridge.name}</p>
+              <h3 className="font-semibold mt-3">Activities:</h3>
+              <ul className="list-disc list-inside">
+                {report.activities.map((act: any) => (
+                  <li key={act.id}>
+                    {act.activity.name} - {act.quantityDone} {act.unit} (Grade: {act.concreteGrade})
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>

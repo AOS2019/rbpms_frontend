@@ -11,6 +11,9 @@ import {
   GitBranch,
   Boxes,
   Users,
+  BriefcaseBusiness,
+  Network,
+  Columns3,
   LogOut,
 } from "lucide-react";
 
@@ -31,6 +34,11 @@ const navItems = [
     icon: GitBranch,
   },
   {
+    name: "Piers",
+    href: "/admin/cpanel/piers",
+    icon: Columns3,
+  },
+  {
     name: "Elements",
     href: "/admin/cpanel/elements",
     icon: Boxes,
@@ -39,6 +47,16 @@ const navItems = [
     name: "Users",
     href: "/admin/cpanel/users",
     icon: Users,
+  },
+  {
+    name: "Employees",
+    href: "/admin/cpanel/employees",
+    icon: BriefcaseBusiness,
+  },
+  {
+    name: "Teams",
+    href: "/admin/cpanel/teams",
+    icon: Network,
   },
 ];
 
