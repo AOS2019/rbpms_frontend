@@ -1,20 +1,22 @@
 import { prisma } from "@/lib/prisma";
 
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 import { exportDailyReportExcel }
 from "@/lib/excel/dailyReportExporter";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: {
-    params: { id: string }
+    params: Promise<{ id: string }>
   }
 ) {
+  const { id } = await params;
+
   const report =
     await prisma.dailyReport.findUnique({
       where: {
-        id: Number(params.id),
+        id: Number(id),
       },
 
       include: {
