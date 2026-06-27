@@ -57,12 +57,12 @@ export default function DailyReportPage() {
     const validatedRows = rows.map((row) => {
       let errors: any = {};
       if (!row.teamId) errors.team = "Required";
-      if (row.activity === "Concrete casting" || row.activity === "Reinforcement assembly" || row.activity === "Formwork assembly") {
-        errors.pier = "Pier required"
-        errors.elementId = "Element required"
-        errors.quantity = "Quantity required"
-        errors.unit = "Concrete grade required"
-      };
+      // if (row.activity === "Concrete casting" || row.activity === "Reinforcement assembly" || row.activity === "Formwork assembly") {
+      //   errors.pier = "Pier required"
+      //   errors.elementId = "Element required"
+      //   errors.quantity = "Quantity required"
+      //   errors.unit = "Concrete grade required"
+      // };
       // if (!row.pier) errors.pier = "Required";
       if (!row.activity) errors.activity = "Required";
       // if (!row.quantity || row.quantity <= 0)
@@ -235,7 +235,7 @@ useEffect(() => {
 
       const data = await response.json();
 
-      console.log("API Response:", data);
+      // console.log("API Response:", data);
 
       if (!response.ok) {
         alert(data.error || "Failed to submit report");
@@ -248,7 +248,7 @@ useEffect(() => {
       alert("Report submitted successfully!");
       window.location.reload();
     } catch (error:any) {
-      console.error("POST /api/daily-reports error:", error);
+      // console.error("POST /api/daily-reports error:", error);
 
       alert(
         "An error occurred while submitting report"
@@ -284,22 +284,36 @@ useEffect(() => {
     async (
       e: React.ChangeEvent<HTMLInputElement>
     ) => {
-
-      const file =
-        e.target.files?.[0];
+      const file = e.target.files?.[0];
 
       if (!file) return;
 
-      const rows =
+      const result =
         await parseDailyReportExcel(file);
 
-      console.log(rows);
+      // console.log(result);
+
+      setGeneralInfo(
+        result.generalInfo
+      );
+
+      setManpowerRows(
+        result.manpower
+      );
+
+      setRows(
+        result.activities
+      );
+
+      alert(
+        "Excel imported successfully"
+      );
     };
 
   const handleExportExcel = async () => {
     try {
 
-      console.log("Export started");
+      alert("Export started");
 
       const workbook =
         await exportDailyReportExcel({
@@ -308,7 +322,7 @@ useEffect(() => {
           activities: rows,
         });
 
-      console.log("Workbook created");
+      alert("Workbook created");
 
       const buffer =
         await workbook.xlsx.writeBuffer();
@@ -340,7 +354,7 @@ useEffect(() => {
 
       window.URL.revokeObjectURL(url);
 
-      console.log("Download complete");
+      alert("Download complete");
 
     } catch (error) {
       console.error(

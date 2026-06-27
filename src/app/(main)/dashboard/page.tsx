@@ -4,6 +4,12 @@ import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
 
+  const [stats, setStats] = useState({
+    totalBridges: 0,
+    onTrack: 0,
+    delayed: 0,
+  });
+
   const [reports, setReports] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -28,6 +34,17 @@ export default function Dashboard() {
       });
   }, []);
 
+  useEffect(() => {
+    fetch("/api/dashboard/stats")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setStats(data.data);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -42,12 +59,12 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <button
+            {/* <button
               type="button"
               className="inline-flex w-full justify-center sm:w-auto items-center px-3 py-2 bg-white border border-gray-200 text-sm text-gray-700 rounded-md hover:bg-gray-50"
             >
               Export
-            </button>
+            </button> */}
           </div>
         </div>
 
@@ -55,7 +72,7 @@ export default function Dashboard() {
           {[
             {
               label: "Total Bridges",
-              value: "24",
+              value: stats.totalBridges,
               icon: (
                 <path
                   strokeWidth="2"
@@ -70,7 +87,7 @@ export default function Dashboard() {
             },
             {
               label: "On Track",
-              value: "18",
+              value: stats.onTrack,
               icon: (
                 <path
                   strokeWidth="2"
@@ -85,7 +102,7 @@ export default function Dashboard() {
             },
             {
               label: "Delayed",
-              value: "6",
+              value: stats.delayed,
               icon: (
                 <path
                   strokeWidth="2"
@@ -152,7 +169,7 @@ export default function Dashboard() {
                   <th className="py-2 px-3">Date</th>
                   <th className="py-2 px-3">Engineer</th>
                   <th className="py-2 px-3">Weather</th>
-                  <th className="py-2 px-3">Work Hours</th>
+                  <th className="py-2 px-3">Foreman</th>
                   <th className="py-2 px-3">Bridge</th>
                   <th className="py-2 px-3">Activities</th>
                   <th className="py-2 px-3"></th>
@@ -164,13 +181,13 @@ export default function Dashboard() {
                     <td className="py-3 px-3 align-top">{new Date(report.date).toLocaleDateString()}</td>
                     <td className="py-3 px-3 align-top">{report.siteEngineer}</td>
                     <td className="py-3 px-3 align-top">{report.weather}</td>
-                    <td className="py-3 px-3 align-top">{report.workHours}</td>
-                    <td className="py-3 px-3 align-top">{report.bridge?.name}</td>
+                    <td className="py-3 px-3 align-top">{report.foreman}</td>
+                    <td className="py-3 px-3 align-top">{report.bridge?.pk_code}</td>
                     <td className="py-3 px-3 align-top">
                       <ul className="list-disc list-inside">
                         {report.activities.map((act: any) => (
                           <li key={act.id}>
-                            {act.activity?.name} - {act.quantityDone} {act.unit} {act.concreteGrade ? `(Grade: ${act.concreteGrade})` : null}
+                            {act.activity} - {act.quantityDone} {act.unit} {act.concreteGrade ? `(Grade: ${act.concreteGrade})` : null}
                           </li>
                         ))}
                       </ul>
