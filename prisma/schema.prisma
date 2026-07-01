@@ -267,6 +267,13 @@ model WeeklyPlanItem {
 
   activity String
 
+
+  activityCode String?
+
+  predecessors Json?
+
+  
+
   unit String
 
   plannedQty Float
