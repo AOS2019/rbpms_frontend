@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    if (!body.pk_code || !body.location || !body.sectionId) {
+    if (!body.pk_code || !body.bridgeType || !body.location || !body.sectionId) {
       return NextResponse.json(
         {
           success: false,
@@ -59,6 +59,7 @@ export async function POST(req: Request) {
     const bridge = await prisma.bridge.create({
       data: {
         pk_code: body.pk_code,
+        bridgeType: body.bridgeType,
         location: body.location,
         sectionId: body.sectionId,
         totalPlanned: Number(body.totalPlanned || 0),

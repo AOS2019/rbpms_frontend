@@ -16,6 +16,7 @@ export async function PUT(
       },
       data: {
         pk_code: body.pk_code,
+        bridgeType: body.bridgeType,
         location: body.location,
         sectionId: Number(body.sectionId),
         totalPlanned: Number(body.totalPlanned || 0),
