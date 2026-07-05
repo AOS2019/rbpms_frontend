@@ -6,6 +6,10 @@ import { WeeklyPlanRow } from "@/lib/weekly-plan/types";
 
 import { generateOverbridgePlan } from "@/lib/weekly-plan/generateOverbridgePlan";
 
+import { exportWeeklyPlanExcel } from "@/lib/weekly-plan/WeeklyPlanExcelExporter";
+
+import { parseWeeklyPlanExcel } from "@/lib/weekly-plan/WeeklyPlanExcelImporter";
+
 export default function WeeklyPlanPage() {
   // Initial State
   const [weekStart, setWeekStart] = useState("");
@@ -15,6 +19,8 @@ export default function WeeklyPlanPage() {
 
   const [rows, setRows] = useState<WeeklyPlanRow[]>([]);
   const [bridges, setBridges] = useState<any[]>([]);
+
+  const [showImportModal, setShowImportModal] = useState(false);
 
   //Load Bridges
   useEffect(() => {
@@ -79,6 +85,139 @@ export default function WeeklyPlanPage() {
     setRows(generatedRows);
   };
 
+  const saveWeeklyPlan =
+    async () => {
+      try {
+        const response =
+          await fetch(
+            "/api/weekly-plans",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body: JSON.stringify({
+                weekStart,
+                weekEnd,
+                rows,
+              }),
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error
+          );
+        }
+
+        alert(
+          "Weekly Plan Saved"
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const handleExportExcel =
+      async () => {
+
+        const workbook =
+          await exportWeeklyPlanExcel(
+            rows
+          );
+
+        const buffer =
+          await workbook.xlsx.writeBuffer();
+
+        const blob =
+          new Blob([buffer]);
+
+        const url =
+          window.URL.createObjectURL(
+            blob
+          );
+
+        const link =
+          document.createElement("a");
+
+        link.href = url;
+
+        link.download =
+          "WeeklyPlan.xlsx";
+
+        link.click();
+      };
+
+      const handleImportExcel = async (
+        e: React.ChangeEvent<HTMLInputElement>
+      ) => {
+        try {
+          const file = e.target.files?.[0];
+
+          if (!file) return;
+
+          console.log(
+            "UPLOAD STARTED:",
+            file.name
+          );
+
+          const importedRows =
+            await parseWeeklyPlanExcel(
+              file
+            );
+
+          console.log(
+            "PARSED DATA:",
+            importedRows
+          );
+
+          setRows(importedRows);
+
+          alert(
+            `${importedRows.length} rows imported successfully`
+          );
+
+        } catch (error) {
+          console.error(
+            "Import failed:",
+            error
+          );
+
+          alert(
+            "Failed to import Weekly Plan"
+          );
+        }
+      };
+
+      // const handleDrop = async (
+      //   e: React.DragEvent<HTMLDivElement>
+      // ) => {
+      //   e.preventDefault();
+
+      //   const file =
+      //     e.dataTransfer.files?.[0];
+
+      //   if (!file) return;
+
+      //   await handleImportExcel({
+      //     target: {
+      //       files: [file],
+      //     },
+      //   } as any);
+
+      //   setShowImportModal(false);
+      // };
+
+      // const handleDragOver = (
+      //   e: React.DragEvent<HTMLDivElement>
+      // ) => {
+      //   e.preventDefault();
+      // };
+
   const updateRow = (
     index: number,
     field: keyof WeeklyPlanRow,
@@ -128,11 +267,44 @@ export default function WeeklyPlanPage() {
                 </option>
               ))}
           </select>
-          <button className="bg-green-600 text-white px-4 py-2 rounded">
-            Import Excel
-          </button>
 
-          <button className="bg-blue-600 text-white px-4 py-2 rounded">
+          <>
+            <input
+              id="weekly-plan-upload"
+              type="file"
+              accept=".xlsx"
+              hidden
+              onChange={
+                handleImportExcel
+              }
+            />
+
+            <button
+              onClick={() =>
+                document
+                  .getElementById(
+                    "weekly-plan-upload"
+                  )
+                  ?.click()
+              }
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Import Excel
+            </button>
+          </>
+          {/* <button
+            onClick={() =>
+              setShowImportModal(true)
+            }
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Import Excel
+          </button> */}
+
+          <button
+            onClick={handleExportExcel}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
             Export Excel
           </button>
           <button
@@ -142,6 +314,12 @@ export default function WeeklyPlanPage() {
             className="bg-green-600 text-white px-4 py-2 rounded"
           >
             Generate Weekly Plan
+          </button>
+          <button
+            onClick={saveWeeklyPlan}
+            className="bg-indigo-600 text-white px-4 py-2 rounded"
+          >
+            Save Plan
           </button>
         </div>
       </div>
