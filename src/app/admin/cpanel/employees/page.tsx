@@ -18,7 +18,8 @@ export default function EmployeesPage() {
     const res = await fetch("/api/employees");
     const data = await res.json();
 
-    setEmployees(data);
+    setEmployees(Array.isArray(data.data) ? data.data : []);
+
   };
 
   useEffect(() => {

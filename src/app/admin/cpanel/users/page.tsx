@@ -7,7 +7,6 @@ const roles = ["VIEWER", "TECHNICIAN", "ADMIN" ];
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
-
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -19,7 +18,7 @@ export default function UsersPage() {
     const res = await fetch("/api/users");
     const data = await res.json();
     if (data.success) {
-      setUsers(data.data);
+      setUsers(Array.isArray(data.data) ? data.data : []);
     }
   };
 
@@ -53,6 +52,16 @@ export default function UsersPage() {
     fetchUsers();
   };
 
+  const updateUser = async (id: number) => {
+    await fetch(`/api/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    fetchUsers();
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -74,6 +83,7 @@ export default function UsersPage() {
               <th className="p-3 text-left">Name</th>
               <th>Email</th>
               <th>Role</th>
+              <th className="text-right p-3">Edit</th>
               <th className="text-right p-3">Action</th>
             </tr>
           </thead>
@@ -84,6 +94,14 @@ export default function UsersPage() {
                 <td className="p-3">{u.name}</td>
                 <td>{u.email}</td>
                 <td>{u.role}</td>
+                <td className="text-right p-3">
+                  <button
+                    onClick={() => updateUser(u.id)}
+                    className="text-blue-600"
+                  >
+                    Edit
+                  </button>
+                </td>
                 <td className="text-right p-3">
                   <button
                     onClick={() => deleteUser(u.id)}
