@@ -5,6 +5,8 @@ import {
   WeeklyPlanRow,
 } from "./types";
 
+import { generateWeekDates } from "./calendar";
+
 
 // ...Date Helper
 function addDays(
@@ -113,6 +115,20 @@ export function generateSchedule(
         activity.duration - 1
       );
 
+    const dailyEntries =
+      generateWeekDates(
+        startDate
+      ).map((date) => ({
+        date:
+          date
+            .toISOString()
+            .split("T")[0],
+
+        plannedQty: 0,
+
+        actualQty: 0,
+      }));
+
     const row: WeeklyPlanRow =
       {
         bridgeId,
@@ -143,6 +159,8 @@ export function generateSchedule(
 
         plannedFinish:
           finishDate,
+
+        dailyEntries,
 
         predecessors:
           activity.predecessors,

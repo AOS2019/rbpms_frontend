@@ -14,6 +14,14 @@ export interface ActivityTemplate {
   predecessors: string[];
 }
 
+export interface DailyQuantity {
+  date: string;
+
+  plannedQty: number;
+
+  actualQty: number;
+}
+
 export interface WeeklyPlanRow {
   id?: number;
 
@@ -38,6 +46,8 @@ export interface WeeklyPlanRow {
   plannedStart: Date;
 
   plannedFinish: Date;
+  
+  dailyEntries: DailyQuantity[];
 
   predecessors?: string[];
 

@@ -64,6 +64,8 @@ export async function parseWeeklyPlanExcel(
             )
           : new Date(),
 
+      dailyEntries: [],
+
       completed:
         row["Completed"] === true ||
         row["Completed"] === "Yes",
