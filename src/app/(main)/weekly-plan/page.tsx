@@ -626,7 +626,7 @@ export default function WeeklyPlanPage() {
               )}
 
               <td
-                  className="p-2 text-sm text-center">{row.plannedQty > 0 && row.actualQty >= row.plannedQty ? "🟢" : "🔴"} </td>
+                  className="border p-2 text-sm text-center">{row.plannedQty > 0 && row.actualQty >= row.plannedQty ? "🟢" : "🔴"} </td>
 
               <td>
                 <input
@@ -638,7 +638,7 @@ export default function WeeklyPlanPage() {
                       e.target.value
                     )
                   }
-                  className="w-50 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="border w-50 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </td>
             </tr>
