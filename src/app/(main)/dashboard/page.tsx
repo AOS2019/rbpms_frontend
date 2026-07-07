@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react';
 
 export default function Dashboard() {
 
+  // 
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
+
   const [stats, setStats] = useState({
     totalBridges: 0,
     onTrack: 0,
@@ -48,13 +62,18 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center mb-6">
+          <div className="flex-1 min-w-0 sm:justify-between">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
               Dashboard
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               Overview of bridges and their current status
+            </p>
+          </div>
+          <div>
+            <p className="text-lg sm:mt-0 sm:ml-4 sm:flex sm:items-center sm:justify-end sm:space-x-2 sm:space-x-reverse">
+              Welcome <span className="ml-2 font-bold">{currentUser?.name || "User"}</span>
             </p>
           </div>
 

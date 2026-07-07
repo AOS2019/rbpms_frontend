@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
       process.env.JWT_SECRET!
     ) as {
       id: number;
+      name: string;
       email: string;
       role: string;
     };
@@ -39,6 +40,7 @@ export async function GET(req: NextRequest) {
       },
       select: {
         id: true,
+        name: true,
         email: true,
         role: true,
       },
