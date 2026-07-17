@@ -1,0 +1,10 @@
+{
+  "$schema": "https://mintlify.com",
+  "name": "My Project Docs",
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": ["index"]
+    }
+  ]
+}
