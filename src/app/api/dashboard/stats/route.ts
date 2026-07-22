@@ -13,7 +13,7 @@ export async function GET() {
       prisma.bridge.count(),
       prisma.dailyReport.count(),
       prisma.dailyActivity.count(),
-      prisma.dailyTeamTask.count(),
+      prisma.dailyTask.count(),
 
       prisma.bridge.findMany({
         select: {

@@ -1,12 +1,8 @@
 "use client";
 
-import {
-  parseDailyReportExcel,
-} from "@/lib/excel/dailyReportImporter";
+import { parseDailyReportExcel } from "@/lib/excel/dailyReportImporter";
 
-import {
-  exportDailyReportExcel,
-} from "@/lib/excel/dailyReportExporter";
+import { exportDailyReportExcel } from "@/lib/excel/dailyReportExporter";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -21,6 +17,7 @@ import { ActivityRow, ManpowerRow } from "@/components/daily-report/types";
 import { NextResponse } from "next/server";
 
 export default function DailyReportPage() {
+  // State variables for managing form data and selections
   const [selectedBridgeId, setSelectedBridgeId] = useState<string>("");
   const [rowPiers, setRowPiers] = useState<Record<number, any[]>>({});
   const [piers, setPiers] = useState<any[]>([]);
@@ -35,10 +32,12 @@ export default function DailyReportPage() {
 
   const [teams, setTeams] = useState<any[]>([]);
 
+  const [teamMembers, setTeamMembers] = useState<Record<number, any[]>>({});
+
   const [bridges, setBridges] = useState<any[]>([]);
 
   const [equipment, setEquipment] = useState<any[]>([]);
-  
+
   const [generalInfo, setGeneralInfo] = useState({
     date: "",
     siteEngineer: "",
@@ -47,11 +46,12 @@ export default function DailyReportPage() {
     weather: "",
   });
 
+  // Filter elements based on the selected bridge
   const filteredElements = elements.filter(
-    (e) =>
-      e.bridgeId === Number(selectedBridgeId)
+    (e) => e.bridgeId === Number(selectedBridgeId),
   );
 
+  // Function to validate rows before submission
   const validateRows = () => {
     let isValid = true;
     const validatedRows = rows.map((row) => {
@@ -77,81 +77,99 @@ export default function DailyReportPage() {
     return isValid;
   };
 
+  // Function to load team members for a given team ID
+  const loadTeamMembers = async (
+    teamId:number
+) =>{
+
+    const res =
+        await fetch(
+            `/api/teams/${teamId}/members`
+        );
+
+    const data =
+        await res.json();
+
+    return data.data || [];
+
+};
+
+  // Effect to fetch piers based on the selected bridge
   useEffect(() => {
-  const fetchPiers = async () => {
-    if (!selectedBridgeId) {
-      setPiers([]);
-      return;
-    }
+    const fetchPiers = async () => {
+      if (!selectedBridgeId) {
+        setPiers([]);
+        return;
+      }
 
-    try {
-      const res = await fetch(
-        `/api/piers?bridge=${selectedBridgeId}`
-      );
+      try {
+        const res = await fetch(`/api/piers?bridge=${selectedBridgeId}`);
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (data.success) {
-        setPiers(data.data);
-      } else {
+        if (data.success) {
+          setPiers(data.data);
+        } else {
+          setPiers([]);
+        }
+      } catch (error) {
+        console.error(error);
         setPiers([]);
       }
-    } catch (error) {
-      console.error(error);
-      setPiers([]);
+    };
+
+    fetchPiers();
+  }, [selectedBridgeId]);
+
+  // Effect to fetch initial data for teams, bridges, employees, and elements
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const teamsRes = await fetch("/api/teams");
+        const teamsData = await teamsRes.json();
+
+        const bridgesRes = await fetch("/api/bridges");
+        const bridgesData = await bridgesRes.json();
+
+        const employeesRes = await fetch("/api/employees");
+        const employeesData = await employeesRes.json();
+
+        const elementsRes = await fetch("/api/elements");
+        const elementsData = await elementsRes.json();
+
+        setTeams(teamsData.data || []);
+        setBridges(bridgesData.data || []);
+        setEmployees(employeesData.data || []);
+        setElements(elementsData.data || []);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchData();
+
+    if (rows.length === 0) {
+      setRows([
+        {
+          teamId: "",
+          bridge: "",
+          pier: "",
+          elementId: 0,
+          activity: "",
+          quantity: 0,
+          unit: "",
+          grade: "",
+        },
+      ]);
     }
-  };
-
-  fetchPiers();
-}, [selectedBridgeId]);
-
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const teamsRes = await fetch("/api/teams");
-      const teamsData = await teamsRes.json();
-
-      const bridgesRes = await fetch("/api/bridges");
-      const bridgesData = await bridgesRes.json();
-
-      const employeesRes = await fetch("/api/employees");
-      const employeesData = await employeesRes.json();
-
-      const elementsRes = await fetch("/api/elements");
-      const elementsData = await elementsRes.json();
-
-      setTeams(teamsData.data || []);
-      setBridges(bridgesData.data || []);
-      setEmployees(employeesData.data || []);
-      setElements(elementsData.data || []);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  fetchData();
-
-  if (rows.length === 0) {
-    setRows([
-      {
-        teamId: "",
-        bridge: "",
-        pier: "",
-        elementId: 0,
-        activity: "",
-        quantity: 0,
-        unit: "",
-        grade: "",
-      },
-    ]);
-  }
-}, []);
+  }, []);
   const activityUnitMap: any = {
     Concrete: "m³",
     Reinforcement: "tons",
     Formwork: "m²",
   };
 
+  // Handler for activity changes to update unit based on selected activity
   const handleActivityChange = (index: number, value: string) => {
     const unit = activityUnitMap[value] || "";
     const newRows = [...rows];
@@ -176,23 +194,65 @@ useEffect(() => {
     ]);
   };
 
+  // Function to remove a row from the activity table
   const removeRow = (index: number) => {
     setRows(rows.filter((_, i) => i !== index));
   };
 
+  // Handler for team selection changes to update the team ID and load members
+  const handleTeamChange = async (rowIndex: number, teamId: number) => {
+    // Update the activity row
+    updateRow(rowIndex, "teamId", teamId);
+
+    // Load members
+    const members = await loadTeamMembers(teamId);
+
+    // Populate manpower table
+    setManpowerRows((prev) => {
+      const existing = prev.filter((p) => Number(p.teamId) !== teamId);
+
+      const newMembers = members.map((m: any) => ({
+        employeeId: m.employee.id,
+
+        staffId: m.employee.staffId,
+
+        employeeName: `${m.employee.firstName} ${m.employee.lastName}`,
+
+        manualEmployee: false,
+
+        teamId: String(teamId),
+
+        hoursWorked: 0,
+
+        equipmentId: "",
+
+        remarks: "",
+      }));
+
+      return [...existing, ...newMembers];
+    });
+  };
+
+  // Function to update a specific field in a row
   const updateRow = <K extends keyof ActivityRow>(
     index: number,
     field: K,
     value: ActivityRow[K],
   ) => {
-    const newRows = [...rows];
-    newRows[index] = { ...newRows[index], [field]: value };
-    setRows(newRows);
+    setRows((prev) => {
+      const copy = [...prev];
+
+      copy[index] = {
+        ...copy[index],
+        [field]: value,
+      };
+
+      return copy;
+    });
   };
 
-
+  // Function to handle form submission
   const handleSubmit = async () => {
-
     const isValid = validateRows();
     if (!isValid) {
       alert("Please fix validation errors");
@@ -211,27 +271,24 @@ useEffect(() => {
         alert("Please complete the General Info section");
         return;
       }
-      const response = await fetch(
-        "/api/daily-reports",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await fetch("/api/daily-reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-          body: JSON.stringify({
-            date: generalInfo.date,
-            siteEngineer: generalInfo.siteEngineer,
-            projectManager: generalInfo.projectManager,
-            weather: generalInfo.weather,
-            foreman: generalInfo.foreman,
-            bridgeId: Number(selectedBridgeId),
+        body: JSON.stringify({
+          date: generalInfo.date,
+          siteEngineer: generalInfo.siteEngineer,
+          projectManager: generalInfo.projectManager,
+          weather: generalInfo.weather,
+          foreman: generalInfo.foreman,
+          bridgeId: Number(selectedBridgeId),
 
-            activities: rows,
-            dailyTeamTasks: manpowerRows,
-          }),
-        }
-      );
+          activities: rows,
+          dailyTeamTasks: manpowerRows,
+        }),
+      });
 
       const data = await response.json();
 
@@ -247,19 +304,17 @@ useEffect(() => {
 
       alert("Report submitted successfully!");
       window.location.reload();
-    } catch (error:any) {
+    } catch (error: any) {
       // console.error("POST /api/daily-reports error:", error);
 
-      alert(
-        "An error occurred while submitting report"
-      );
+      alert("An error occurred while submitting report");
 
       return NextResponse.json(
         {
           success: false,
           error: error.message,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -274,77 +329,57 @@ useEffect(() => {
     // alert("Report submitted successfully!");
   };
 
+  // Class for standard input styling
   const standardInputClass =
     "w-full p-2 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-200";
-  
-  const fileInputRef =
-  useRef<HTMLInputElement>(null);
-  
-  const handleExcelUpload =
-    async (
-      e: React.ChangeEvent<HTMLInputElement>
-    ) => {
-      const file = e.target.files?.[0];
 
-      if (!file) return;
+  // Ref for file input to trigger file selection dialog
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-      const result =
-        await parseDailyReportExcel(file);
+  // Handler for Excel file upload to parse and populate form data
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
 
-      // console.log(result);
+    if (!file) return;
 
-      setGeneralInfo(
-        result.generalInfo
-      );
+    const result = await parseDailyReportExcel(file);
 
-      setManpowerRows(
-        result.manpower
-      );
+    // console.log(result);
 
-      setRows(
-        result.activities
-      );
+    setGeneralInfo(result.generalInfo);
 
-      alert(
-        "Excel imported successfully"
-      );
-    };
+    setManpowerRows(result.manpower);
+
+    setRows(result.activities);
+
+    alert("Excel imported successfully");
+  };
 
   const handleExportExcel = async () => {
     try {
-
       alert("Export started");
 
-      const workbook =
-        await exportDailyReportExcel({
-          ...generalInfo,
-          manpower: manpowerRows,
-          activities: rows,
-        });
+      const workbook = await exportDailyReportExcel({
+        ...generalInfo,
+        manpower: manpowerRows,
+        activities: rows,
+      });
 
       alert("Workbook created");
 
-      const buffer =
-        await workbook.xlsx.writeBuffer();
+      const buffer = await workbook.xlsx.writeBuffer();
 
-      const blob = new Blob(
-        [buffer],
-        {
-          type:
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        }
-      );
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-      const url =
-        window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
 
-      const link =
-        document.createElement("a");
+      const link = document.createElement("a");
 
       link.href = url;
 
-      link.download =
-        `Daily_Report_${Date.now()}.xlsx`;
+      link.download = `Daily_Report_${Date.now()}.xlsx`;
 
       document.body.appendChild(link);
 
@@ -355,12 +390,8 @@ useEffect(() => {
       window.URL.revokeObjectURL(url);
 
       alert("Download complete");
-
     } catch (error) {
-      console.error(
-        "Export error:",
-        error
-      );
+      console.error("Export error:", error);
     }
   };
   return (
@@ -370,9 +401,7 @@ useEffect(() => {
         <div className="flex justify-end gap-3 mb-4">
           <button
             type="button"
-            onClick={() =>
-              fileInputRef.current?.click()
-            }
+            onClick={() => fileInputRef.current?.click()}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded"
           >
             Upload Excel
@@ -386,9 +415,7 @@ useEffect(() => {
             className="hidden"
           />
           <button
-            onClick=
-            {handleExportExcel}
-            
+            onClick={handleExportExcel}
             className="bg-blue-600 text-white px-4 py-2 rounded"
           >
             Export Excel
@@ -418,10 +445,8 @@ useEffect(() => {
           <div className="md:hidden space-y-4">
             <div className="flex justify-between mb-4 items-center gap-4 flex-wrap">
               <h2 className="text-lg font-semibold">
-
-  {/* (Mobile View) */}
-
-                Team Tasks 
+                {/* (Mobile View) */}
+                Team Tasks
               </h2>
               <button
                 onClick={addRow}
@@ -453,20 +478,20 @@ useEffect(() => {
                     <label className="text-xs text-gray-700">Team</label>
                     <select
                       value={row.teamId}
-                      onChange={(e) => updateRow(index, "teamId", e.target.value)}
+                      onChange={(e) =>
+                        handleTeamChange(index, Number(e.target.value))
+                      }
                       className={`${standardInputClass} ${row.errors?.team ? "border-red-400 ring-1 ring-red-200" : ""}`}
                     >
                       <option value="" disabled>
                         Select team
                       </option>
-                      {Array.isArray(teams) && teams.map((team:any) => (
-                        <option
-                          key={team.id}
-                          value={team.id}
-                        >
-                          {team.name}
-                        </option>
-                      ))}
+                      {Array.isArray(teams) &&
+                        teams.map((team: any) => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
                     </select>
                     {row.errors?.team && (
                       <p className="text-red-600 text-xs mt-1">
@@ -486,8 +511,11 @@ useEffect(() => {
                         Select pier
                       </option>
                       {piers.map((p: any) => (
-                        <option key={p.id} value={p.pierNumber ?? `Pier ${p.id}`}>
-                            {p.pierNumber ?? `Pier ${p.id}`}
+                        <option
+                          key={p.id}
+                          value={p.pierNumber ?? `Pier ${p.id}`}
+                        >
+                          {p.pierNumber ?? `Pier ${p.id}`}
                         </option>
                       ))}
                     </select>
@@ -510,10 +538,7 @@ useEffect(() => {
                       <option value="">Select Element</option>
 
                       {elements.map((element: any) => (
-                        <option
-                          key={element.id}
-                          value={element.id}
-                        >
+                        <option key={element.id} value={element.id}>
                           {element.name}
                         </option>
                       ))}
@@ -607,13 +632,10 @@ useEffect(() => {
           </div>
 
           <div className="hidden md:block overflow-x-auto">
-
-  {/* Desktop Table View */}
+            {/* Desktop Table View */}
 
             <div className="flex justify-between mb-4 items-center gap-4 flex-wrap">
-              <h2 className="text-lg font-semibold">
-                Team Tasks
-              </h2>
+              <h2 className="text-lg font-semibold">Team Tasks</h2>
               <button
                 onClick={addRow}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-7 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -662,7 +684,7 @@ useEffect(() => {
                       <select
                         value={row.teamId}
                         onChange={(e) =>
-                          updateRow(index, "teamId", e.target.value)
+                          handleTeamChange(index, Number(e.target.value))
                         }
                         className={`w-44 p-2 border rounded bg-white text-sm focus:outline-none ${
                           row.errors?.team
@@ -676,13 +698,10 @@ useEffect(() => {
                         </option>
                         {Array.isArray(teams) &&
                           teams.map((team: any) => (
-                            <option
-                              key={team.id}
-                              value={team.id}
-                            >
+                            <option key={team.id} value={team.id}>
                               {team.name}
                             </option>
-                        ))}
+                          ))}
                       </select>
                       {row.errors?.team && (
                         <p className="text-red-600 text-xs mt-1">
@@ -723,14 +742,9 @@ useEffect(() => {
                       <select
                         value={row.elementId || ""}
                         onChange={(e) =>
-                          updateRow(
-                            index,
-                            "elementId",
-                            Number(e.target.value)
-                          )
+                          updateRow(index, "elementId", Number(e.target.value))
                         }
-                        
-                        className={`w-36 p-2 border rounded bg-white text-sm focus:outline-none ${
+                        className={`w-full p-2 border rounded bg-white text-sm focus:outline-none ${
                           row.errors?.pier
                             ? "border-red-400 ring-1 ring-red-200"
                             : "focus:ring-2 focus:ring-blue-200"
@@ -738,19 +752,13 @@ useEffect(() => {
                         aria-label={`Pier ${index + 1}`}
                       >
                         {filteredElements.map((element) => (
-                          <option
-                            key={element.id}
-                            value={element.id}
-                          >
+                          <option key={element.id} value={element.id}>
                             {element.name}
                           </option>
                         ))}
 
                         {elements.map((element) => (
-                          <option
-                            key={element.id}
-                            value={element.id}
-                          >
+                          <option key={element.id} value={element.id}>
                             {element.name}
                           </option>
                         ))}

@@ -65,8 +65,23 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
+
+    // Database unavailable
+    if (
+      error?.code === "P1001" ||
+      error?.name === "PrismaClientInitializationError"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Database connection is temporarily unavailable. Please try again in a few moments.",
+        },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json(
       {

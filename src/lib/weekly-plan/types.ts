@@ -62,3 +62,28 @@ export interface ScheduleNode {
 
   earliestFinish: Date;
 }
+
+
+export interface EquipmentUsageRow {
+
+    equipmentId: number;
+
+    operatorId?: number;
+
+    equipmentCode?: string;
+
+    equipmentName?: string;
+
+    operatorName?: string;
+
+    startReading: number;
+
+    endReading: number;
+
+    totalReading: number;
+
+    standbyHours: number;
+
+    breakdownHours: number;
+
+}

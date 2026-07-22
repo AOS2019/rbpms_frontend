@@ -15,7 +15,7 @@ import { generateWeekDates } from "@/lib/weekly-plan/calendar";
 export default function WeeklyPlanPage() {
   // Initial State
   const [weekStart, setWeekStart] = useState("");
-  const [weekEnd, setWeekEnd] = useState("");
+  // const [weekEnd, setWeekEnd] = useState("");
 
   const [selectedBridgeId, setSelectedBridgeId] = useState<number>(0);
 
@@ -58,6 +58,9 @@ export default function WeeklyPlanPage() {
   const startDate = getWeekStartThursday( weekStart
     ? new Date(weekStart): new Date());
 
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 6);
+
   const weekDates = generateWeekDates(startDate);
 
   //Add Row
@@ -71,11 +74,11 @@ export default function WeeklyPlanPage() {
         locationCode: "",
         activity: "",
         unit: "",
+        dailyEntries: [],
         plannedQty: 0,
         actualQty: 0,
         plannedStart: new Date(),
         plannedFinish: new Date(),
-        dailyEntries: [],
         completed: false,
       },
     ]);
@@ -115,6 +118,8 @@ export default function WeeklyPlanPage() {
   const saveWeeklyPlan =
     async () => {
       try {
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
         const response =
           await fetch(
             "/api/weekly-plans",
@@ -125,8 +130,8 @@ export default function WeeklyPlanPage() {
                   "application/json",
               },
               body: JSON.stringify({
-                weekStart,
-                weekEnd,
+                weekStart: startDate,
+                weekEnd: endDate,
                 rows,
               }),
             }
@@ -154,7 +159,11 @@ export default function WeeklyPlanPage() {
 
         const workbook =
           await exportWeeklyPlanExcel(
-            rows
+            rows,
+            weekDates,
+            "157",
+            "Kano-Maradi",
+            "SECTION 01"
           );
 
         const buffer =
@@ -410,10 +419,6 @@ export default function WeeklyPlanPage() {
             <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Element</th>
             <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Activity</th>
             <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Unit</th>
-
-            <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Week Plan</th>
-            <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Week Real</th>
-
             
             {weekDates.map((date) => (
               <th
@@ -432,6 +437,10 @@ export default function WeeklyPlanPage() {
                 )}
               </th>
             ))}
+
+            <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Week Plan</th>
+            <th rowSpan={2} className="border px-4 py-1 text-left font-semibold">Week Real</th>
+
             <th rowSpan={2} className="border px-4 py-2 text-left font-semibold">Status</th>
             <th rowSpan={2} className="border px-4 py-2 text-left font-semibold">Variance</th>
           </tr>
@@ -539,36 +548,6 @@ export default function WeeklyPlanPage() {
                 />
               </td>
 
-              <td className="px-4 py-2 border text-sm text-gray-700 font-medium">
-                <input
-                  type="number"
-                  value={row.plannedQty}
-                  onChange={(e) =>
-                    updateRow(
-                      index,
-                      "plannedQty",
-                      Number(e.target.value)
-                    )
-                  }
-                  className="w-30 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </td>
-
-              <td className="px-4 py-2 border text-sm text-gray-700 font-medium">
-                <input
-                  type="number"
-                  value={row.actualQty}
-                  onChange={(e) =>
-                    updateRow(
-                      index,
-                      "actualQty",
-                      Number(e.target.value)
-                    )
-                  }
-                  className="w-30 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </td>
-
               {weekDates.map(
                 (_, dayIndex) => {
                   const entry =
@@ -598,7 +577,7 @@ export default function WeeklyPlanPage() {
                               )
                             )
                           }
-                          className="w-20 text-center"
+                          className="w-10 text-center"
                         />
                       </td>
 
@@ -617,7 +596,7 @@ export default function WeeklyPlanPage() {
                               )
                             )
                           }
-                          className="w-20 text-center"
+                          className="w-10 text-center"
                         />
                       </td>
                     </Fragment>
@@ -625,10 +604,41 @@ export default function WeeklyPlanPage() {
                 }
               )}
 
-              <td
-                  className="border p-2 text-sm text-center">{row.plannedQty > 0 && row.actualQty >= row.plannedQty ? "🟢" : "🔴"} </td>
+              <td className="px-4 py-2 border text-sm text-gray-700 font-medium">
+                <input
+                  type="number"
+                  value={row.plannedQty}
+                  onChange={(e) =>
+                    updateRow(
+                      index,
+                      "plannedQty",
+                      Number(e.target.value)
+                    )
+                  }
+                  className="w-20 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </td>
 
-              <td>
+              <td className="px-4 py-2 border text-sm text-gray-700 font-medium text-center">
+                <input
+                  type="number"
+                  value={row.actualQty}
+                  onChange={(e) =>
+                    updateRow(
+                      index,
+                      "actualQty",
+                      Number(e.target.value)
+                    )
+                  }
+                  className="w-20 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </td>
+
+              <td className="border p-2 text-sm text-center">
+                  {row.plannedQty > 0 && row.actualQty >= row.plannedQty ? "🟢" : "🔴"} 
+              </td>
+
+              <td className="border p-2 text-sm text-center">
                 <input
                   value={row.varianceReason || ""}
                   onChange={(e) =>
@@ -638,7 +648,7 @@ export default function WeeklyPlanPage() {
                       e.target.value
                     )
                   }
-                  className="border w-50 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="mx-1 w-50 p-2 border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </td>
             </tr>

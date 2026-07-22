@@ -86,8 +86,8 @@ export default function ManpowerDeploymentSection({
   if (mobile) {
     return (
       <div className="space-y-3 border-b last:border-b-0 p-3 bg-white rounded shadow-sm flex flex-col justify-between gap-4 mb-6 border border-gray-200">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-4 mb-4 items-center justify-start flex-wrap">
-          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 items-center justify-start flex-wrap gap-2 sm:gap-4">
+          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start sm:justify-start">
             Non Employee
           </label>
 
@@ -107,7 +107,7 @@ export default function ManpowerDeploymentSection({
           </label>
         </div>
 
-        <div>
+        <div className="flex flex-col gap-2">
           <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
             Staff ID
           </label>
@@ -123,7 +123,7 @@ export default function ManpowerDeploymentSection({
           />
         </div>
 
-        <div>
+        <div className="flex flex-col gap-2">
           <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
             Staff/Employee Name
           </label>
@@ -143,7 +143,7 @@ export default function ManpowerDeploymentSection({
           />
         </div>
 
-        <div>
+        <div className="flex flex-col gap-2">
           <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
             Employee ID
           </label>
@@ -194,8 +194,8 @@ export default function ManpowerDeploymentSection({
           </select>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
+        <div className="flex flex-col gap-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start sm:justify-start sm:col-span-1">
             Team
           </label>
 
@@ -221,8 +221,8 @@ export default function ManpowerDeploymentSection({
           </select>
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start">
+        <div className="flex flex-col gap-2">
+          <label className="block text-xs font-medium text-gray-600 mb-1 sm:col-span-2 flex items-center gap-2 justify-start sm:justify-start sm:col-span-1">
             Hours Worked
           </label>
 
@@ -243,7 +243,7 @@ export default function ManpowerDeploymentSection({
 
         <button
           onClick={() => removeRow(index)}
-          className="w-full bg-red-500 text-white py-2 rounded"
+          className="w-full sm:w-auto bg-red-500 text-white rounded hover:bg-red-600 transition-colors duration-200"
         >
           Remove Employee
         </button>

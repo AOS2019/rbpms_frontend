@@ -10,7 +10,7 @@ export async function GET() {
       include: {
         bridge: true,
         activities: true,
-        dailyTeamTasks: true,
+        tasks: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -107,9 +107,29 @@ export async function POST(req: Request) {
             employeeId: task.employeeId,
             teamId: task.teamId,
             bridgeId: body.bridgeId,
-            equipmentId: task.equipmentId,
+
             hoursWorked: task.hoursWorked,
             remarks: task.remarks,
+
+            equipmentUsages: {
+              create: (task.equipmentUsages || []).map((eq: any) => ({
+                equipmentId: eq.equipmentId,
+
+                operatorId: eq.operatorId,
+
+                startReading: Number(eq.startReading),
+
+                endReading: Number(eq.endReading),
+
+                totalReading:
+                  Number(eq.endReading) -
+                  Number(eq.startReading),
+
+                standbyHours: Number(eq.standbyHours),
+
+                breakdownHours: Number(eq.breakdownHours),
+              })),
+            },
           })),
         },
       },
@@ -124,9 +144,9 @@ export async function POST(req: Request) {
       data: report,
     });
   } catch (error: any) {
-    console.error('POST /api/daily-reports error:', error);
+    console.error(error);
 
-     // Database unavailable
+    // Database unavailable
     if (
       error?.code === "P1001" ||
       error?.name === "PrismaClientInitializationError"

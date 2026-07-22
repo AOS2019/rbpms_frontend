@@ -8,12 +8,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
-
-
-
-
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -30,8 +24,37 @@ model Team {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Permanent crew
+  members TeamMember[]
+
+  assignedMembers DailyTaskManpower[]  @relation("AssignedFromTeam")
+
+  // Daily production
   activities DailyActivity[]
-  dailyTeamTasks DailyTeamTask[]
+
+  // Daily work assignments
+  tasks DailyTask[]
+}
+
+model TeamMember {
+  id Int @id @default(autoincrement())
+
+  teamId Int
+  team Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  employeeId Int
+  employee Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  active Boolean @default(true)
+
+  joinedAt DateTime @default(now())
+
+  leftAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, employeeId])
 }
 
 model Employee {
@@ -48,14 +71,15 @@ model Employee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  dailyTeamTasks DailyTeamTask[]
+  // Permanent teams
+  teams TeamMember[]
+
+  // Daily work history
+  taskEntries DailyTaskManpower[]
+
+  // Equipment operated
+  operatedEquipment EquipmentUsage[] @relation("EquipmentOperator")
 }
-
-
-
-
-
-
 
 enum BridgeType {
   BRIDGE
@@ -74,11 +98,6 @@ enum Role {
   VIEWER
 }
 
-
-
-
-
-
 model Section {
   id        Int      @id @default(autoincrement())
   name      String
@@ -87,17 +106,16 @@ model Section {
   bridges   Bridge[]
 }
 
-
 model Bridge {
-  id         Int        @id @default(autoincrement())
-  pk_code    String     @unique
-  bridgeType BridgeType @default(BRIDGE)
-  sectionId  Int
-  section    Section    @relation(fields: [sectionId], references: [id])
+  id             Int             @id @default(autoincrement())
+  pk_code        String          @unique
+  bridgeType     BridgeType      @default(BRIDGE)
+  sectionId      Int
+  section        Section         @relation(fields: [sectionId], references: [id])
   activities     DailyActivity[]
   piers          Pier[]
-  totalCompleted Float   @default(0)
-  totalPlanned   Float   @default(0)
+  totalCompleted Float           @default(0)
+  totalPlanned   Float           @default(0)
   location       String?
 
   dailyReports DailyReport[]
@@ -105,39 +123,36 @@ model Bridge {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  dailyTeamTasks DailyTeamTask[]
-
   weeklyPlanItems WeeklyPlanItem[]
+
+  dailyTasks DailyTask[]
 }
 
-
 model Element {
-  id         Int             @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   name       String
   type       String?
-  bridgeType       BridgeType?
+  bridgeType BridgeType?
   status     String?
 
   activities DailyActivity[]
 }
 
-
 model Pier {
-  id          Int      @id @default(autoincrement())
-  pierNumber  String   // P1, P2, P3...
-  type        PierType @default(PIER)
+  id         Int      @id @default(autoincrement())
+  pierNumber String // P1, P2, P3...
+  type       PierType @default(PIER)
 
   bridgeId    Int
   height      Float?
-  columnCount Int      @default(2)
+  columnCount Int     @default(2)
   shape       String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  bridge      Bridge   @relation(fields: [bridgeId], references: [id])
-  columns     Column[]
+  bridge  Bridge   @relation(fields: [bridgeId], references: [id])
+  columns Column[]
 }
-
 
 model Column {
   id           Int      @id @default(autoincrement())
@@ -149,55 +164,74 @@ model Column {
   pier         Pier     @relation(fields: [pierId], references: [id])
 }
 
-
 model DailyReport {
-  id             Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   date           DateTime
   siteEngineer   String
-  foreman         String
+  foreman        String
   projectManager String
   weather        String
 
-  bridgeId       Int
-  bridge         Bridge          @relation(fields: [bridgeId], references: [id])
+  bridgeId Int
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  activities     DailyActivity[]
-  dailyTeamTasks DailyTeamTask[]
+  activities DailyActivity[]
+  tasks      DailyTask[]
 }
 
-
-model DailyTeamTask {
+model DailyTask {
   id Int @id @default(autoincrement())
 
   dailyReportId Int
   dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
 
-  employeeId Int
-  employee   Employee @relation(fields: [employeeId], references: [id])
+  bridgeId Int
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
 
   teamId Int
   team   Team @relation(fields: [teamId], references: [id])
 
-  bridgeId Int
-  bridge   Bridge @relation(fields: [bridgeId], references: [id])
+  activityCode String?
+  activity     String
 
-  equipmentId Int?
-  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  locationCode String
 
-  hoursWorked Float
-  remarks     String?
+  remarks String?
+
+  manpower DailyTaskManpower[]
+
+  equipmentUsages EquipmentUsage[]
 
   createdAt DateTime @default(now())
 }
 
+model DailyTaskManpower {
+  id Int @id @default(autoincrement())
+
+  dailyTaskId Int
+  dailyTask   DailyTask @relation(fields: [dailyTaskId], references: [id])
+
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  hoursWorked Float
+
+  // NEW
+  assignedFromTeamId Int?
+  assignedFromTeam Team?   @relation("AssignedFromTeam", fields:[assignedFromTeamId], references:[id])
+  
+  remarks String?
+
+  createdAt DateTime @default(now())
+}
 
 model DailyActivity {
-  id            Int         @id @default(autoincrement())
-  activity  String?
+  id       Int     @id @default(autoincrement())
+  activity String?
 
   teamId Int
   team   Team @relation(fields: [teamId], references: [id])
@@ -205,23 +239,21 @@ model DailyActivity {
   bridgeId Int
   bridge   Bridge @relation(fields: [bridgeId], references: [id])
 
-  pierNumber    String?
+  pierNumber String?
 
   quantityDone  Float?
   unit          String?
   concreteGrade String?
   status        String
-  
+
   dailyReportId Int
   dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
 
-  elementId     Int?
-  element       Element?     @relation(fields: [elementId], references: [id])
+  elementId Int?
+  element   Element? @relation(fields: [elementId], references: [id])
 
-  createdAt     DateTime    @default(now())
-  
+  createdAt DateTime @default(now())
 }
-
 
 model Equipment {
   id Int @id @default(autoincrement())
@@ -233,15 +265,42 @@ model Equipment {
 
   createdAt DateTime @default(now())
 
-  dailyTeamTasks DailyTeamTask[]
+  usages EquipmentUsage[]
 }
 
+model EquipmentUsage {
+  id Int @id @default(autoincrement())
+
+  dailyTaskId Int
+  dailyTask   DailyTask @relation(fields: [dailyTaskId], references: [id])
+
+  equipmentId Int
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+
+  operatorId Int?
+  operator   Employee? @relation("EquipmentOperator", fields: [operatorId], references: [id])
+
+  // Meter readings
+  startReading Float
+  endReading   Float
+  totalReading Float
+
+  // Downtime
+  standbyHours   Float @default(0)
+  breakdownHours Float @default(0)
+
+  // Useful for analysis
+  fuelUsed Float? // Litres
+  remarks  String?
+
+  createdAt DateTime @default(now())
+}
 
 model WeeklyPlan {
   id Int @id @default(autoincrement())
 
   weekStart DateTime
-  weekEnd DateTime
+  weekEnd   DateTime
 
   remarks String?
 
@@ -251,15 +310,14 @@ model WeeklyPlan {
   items WeeklyPlanItem[]
 }
 
-
 model WeeklyPlanItem {
   id Int @id @default(autoincrement())
 
   weeklyPlanId Int
-  weeklyPlan WeeklyPlan @relation(fields: [weeklyPlanId], references: [id])
+  weeklyPlan   WeeklyPlan @relation(fields: [weeklyPlanId], references: [id])
 
   bridgeId Int
-  bridge Bridge @relation(fields: [bridgeId], references: [id])
+  bridge   Bridge @relation(fields: [bridgeId], references: [id])
 
   elementType String
 
@@ -267,23 +325,22 @@ model WeeklyPlanItem {
 
   activity String
 
-
   activityCode String?
 
   predecessors Json?
 
-  
-
   unit String
+
+  dailyEntries Json?
 
   plannedQty Float
 
   actualQty Float @default(0)
 
-  plannedStart DateTime
+  plannedStart  DateTime
   plannedFinish DateTime
 
-  actualStart DateTime?
+  actualStart  DateTime?
   actualFinish DateTime?
 
   varianceReason String?
@@ -292,7 +349,6 @@ model WeeklyPlanItem {
 
   createdAt DateTime @default(now())
 }
-
 
 model Holiday {
   id Int @id @default(autoincrement())

@@ -6,7 +6,7 @@ export async function GET() {
       const employees = 
         await prisma.employee.findMany({
           orderBy: {
-            firstName: "asc",
+            staffId: "asc",
           },
         });
       

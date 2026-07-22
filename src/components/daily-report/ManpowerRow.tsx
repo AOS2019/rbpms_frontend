@@ -202,12 +202,12 @@ export default function ManpowerRow({
   return (
     <tr
       key={index}
-      className={`border-b last:border-b-0 text-center ${
+      className={`border-b last:border-b-0 justify-content text-center ${
         index % 2 === 0 ? "bg-white" : "bg-gray-50"
       }`}
     >
       {/* Manual Employee Checkbox */}
-      <td className="p-2 align-top">
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -223,7 +223,7 @@ export default function ManpowerRow({
           Non-Employee
         </label>
       </td>
-      <td className="p-2 align-top">
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <input
           value={row.staffId}
           disabled={!row.manualEmployee}
@@ -238,7 +238,7 @@ export default function ManpowerRow({
           placeholder="Staff ID"
         />
       </td>
-      <td>
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <input
           value={row.employeeName}
           disabled={!row.manualEmployee}
@@ -255,7 +255,7 @@ export default function ManpowerRow({
       </td>
 
       {/* Employee Selection */}
-      <td className="p-2 align-top">
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <select
           value={row.employeeId ?? ""}
           onChange={(e) => {
@@ -305,7 +305,7 @@ export default function ManpowerRow({
         </select>
       </td>
 
-      <td>
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <select
           value={row.teamId}
           onChange={(e) =>
@@ -333,7 +333,7 @@ export default function ManpowerRow({
         </select>
       </td>
 
-      <td>
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <input
           type="number"
           value={row.hoursWorked}
@@ -349,10 +349,10 @@ export default function ManpowerRow({
         />
       </td>
 
-      <td>
+      <td className="p-2 align-top items-center justify-center gap-2 flex-wrap sm:justify-center sm:flex-nowrap">
         <button
           onClick={() => onRemove(index)}
-          className="bg-red-500 text-white px-3 py-1 rounded"
+          className="w-full sm:w-auto bg-red-500 text-white px-3 py-1 rounded"
         >
           Remove
         </button>

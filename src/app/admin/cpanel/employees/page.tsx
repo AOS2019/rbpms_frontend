@@ -154,7 +154,7 @@ export default function EmployeesPage() {
         <table className="w-full">
 
           <thead>
-            <tr className="border-b">
+            <tr className="border-b bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
               <th className="text-left p-2">Staff ID</th>
               <th className="text-left p-2">Name</th>
               <th className="text-left p-2">Trade</th>
@@ -165,25 +165,25 @@ export default function EmployeesPage() {
 
           <tbody>
             {employees.map((employee) => (
-              <tr key={employee.id} className="border-b">
+              <tr key={employee.id} className="border-b hover:bg-gray-100 transition duration-300 ease-in-out cursor-pointer">
 
-                <td className="p-2">
+                <td className="p-2 font-medium text-gray-900 whitespace-nowrap">
                   {employee.staffId}
                 </td>
 
-                <td className="p-2">
+                <td className="p-2 font-medium text-gray-900 whitespace-nowrap">
                   {employee.firstName} {employee.lastName}
                 </td>
 
-                <td className="p-2">
+                <td className="p-2 font-medium text-gray-900 whitespace-nowrap">
                   {employee.trade}
                 </td>
 
-                <td className="p-2">
+                <td className="p-2 font-medium text-gray-900 whitespace-nowrap">
                   {employee.designation}
                 </td>
 
-                <td className="p-2">
+                <td className="p-2 font-medium text-gray-900 whitespace-nowrap">
                   {employee.phone}
                 </td>
 
