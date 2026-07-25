@@ -2,41 +2,55 @@ import { prisma } from "@/lib/prisma";
 
 import { NextResponse, NextRequest } from "next/server";
 
-import { exportDailyReportExcel }
-from "@/lib/excel/dailyReportExporter";
+import { exportDailyReportExcel } from "@/lib/excel/dailyReportExporter";
 
 export async function GET(
   request: NextRequest,
-  { params }: {
-    params: Promise<{ id: string }>
+  {
+    params,
+  }: {
+    params: Promise<{ id: string }>;
   }
 ) {
   const { id } = await params;
 
-  const report =
-    await prisma.dailyReport.findUnique({
-      where: {
-        id: Number(id),
-      },
+  const report = await prisma.dailyReport.findUnique({
+    where: {
+      id: Number(id),
+    },
 
-      include: {
-        bridge: true,
+    include: {
+      bridge: true,
 
-        dailyTeamTasks: {
-          include: {
-            employee: true,
-            team: true,
-          },
-        },
-
-        activities: {
-          include: {
-            team: true,
-            element: true,
-          },
+      activities: {
+        include: {
+          team: true,
+          element: true,
         },
       },
-    });
+
+      tasks: {
+        include: {
+          team: true,
+          bridge: true,
+
+          manpower: {
+            include: {
+              employee: true,
+            },
+          },
+
+          equipmentUsages: {
+            include: {
+              equipment: true,
+
+              operator: true,
+            },
+          },
+        },
+      },
+    },
+  });
 
   if (!report) {
     return NextResponse.json(
@@ -45,71 +59,88 @@ export async function GET(
       },
       {
         status: 404,
-      }
+      },
     );
   }
 
-  const workbook =
-    await exportDailyReportExcel({
-      ...report,
+  const workbook = await exportDailyReportExcel({
+  ...report,
 
-      manpower:
-        report.dailyTeamTasks.map(
-          (m) => ({
-            staffId:
-              m.employee.staffId,
+  manpower: report.tasks.flatMap((task) =>
+    task.manpower.map((m) => ({
+      staffId: m.employee.staffId,
 
-            employeeName:
-              `${m.employee.firstName} ${m.employee.lastName}`,
+      employeeName: `${m.employee.firstName} ${m.employee.lastName}`,
 
-            teamName:
-              m.team.name,
+      teamName: task.team.name,
 
-            hoursWorked:
-              m.hoursWorked,
+      activity: task.activity,
 
-            remarks:
-              m.remarks,
-          })
-        ),
+      locationCode: task.locationCode,
 
-      activities:
-        report.activities.map(
-          (a) => ({
-            teamName:
-              a.team.name,
+      hoursWorked: m.hoursWorked,
 
-            activity:
-              a.activity,
+      remarks: m.remarks,
+    }))
+  ),
 
-            pierNumber:
-              a.pierNumber,
+  equipment: report.tasks.flatMap((task) =>
+    task.equipmentUsages.map((e) => ({
+      task: task.activity,
 
-            quantityDone:
-              a.quantityDone,
+      locationCode: task.locationCode,
 
-            unit:
-              a.unit,
+      teamName: task.team.name,
 
-            concreteGrade:
-              a.concreteGrade,
+      equipmentCode: e.equipment.equipmentCode,
 
-            elementName:
-              a.element?.name,
-          })
-        ),
-    });
+      equipmentName: e.equipment.name,
 
-  const buffer =
-    await workbook.xlsx.writeBuffer();
+      operator: e.operator
+        ? `${e.operator.firstName} ${e.operator.lastName}`
+        : "",
+
+      startReading: e.startReading,
+
+      endReading: e.endReading,
+
+      totalReading: e.totalReading,
+
+      standbyHours: e.standbyHours,
+
+      breakdownHours: e.breakdownHours,
+
+      fuelUsed: e.fuelUsed,
+
+      remarks: e.remarks,
+    }))
+  ),
+
+  activities: report.activities.map((a) => ({
+    teamName: a.team.name,
+
+    activity: a.activity,
+
+    pierNumber: a.pierNumber,
+
+    quantityDone: a.quantityDone,
+
+    unit: a.unit,
+
+    concreteGrade: a.concreteGrade,
+
+    elementName: a.element?.name,
+  })),
+});
+
+  const buffer = await workbook.xlsx.writeBuffer();
 
   return new Response(buffer, {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-      "Content-Disposition":
-        `attachment; filename=DailyReport-${report.id}.xlsx`,
+      "Content-Disposition": `attachment; filename=DailyReport-${report.id}.xlsx`,
     },
   });
 }
