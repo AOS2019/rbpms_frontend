@@ -22,6 +22,14 @@ model Team {
   id   Int    @id @default(autoincrement())
   name String @unique
 
+  bridgeId Int?
+
+  bridge Bridge? @relation(fields: [bridgeId], references: [id])
+
+  crewCode String? @unique
+
+  active Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -57,7 +65,7 @@ model Crew {
   teamId Int
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  crewCode String @unique
+  crewCode String
 
   description String?
 
@@ -65,12 +73,15 @@ model Crew {
 
   members CrewMember[]
 
+  // Employees assigned to this crew in a Daily Report
+  attendance EmployeeAttendance[]
+
   tasks DailyTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([teamId])
+  @@unique([teamId, crewCode])
 }
 
 model CrewMember {
@@ -117,7 +128,7 @@ model Employee {
 
   crewMemberships CrewMember[]
 
-  operatedEquipment EquipmentUsage[] @relation("EquipmentOperator")
+  // operatedEquipment EquipmentUsage[] @relation("EquipmentOperator")
 }
 
 model EmployeeAttendance {
@@ -130,13 +141,18 @@ model EmployeeAttendance {
   employee Employee @relation(fields: [employeeId], references: [id])
 
   attendanceStatus AttendanceStatus @default(PRESENT)
+  usages EquipmentUsage[]
 
   remarks String?
 
   // NEW
   assignedBridgeId Int?
+  assignedBridge Bridge? @relation(fields: [assignedBridgeId], references: [id])
 
   assignedCrewId Int?
+  assignedCrew Crew? @relation(fields: [assignedCrewId], references: [id])
+
+  hoursWorked Float?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -190,6 +206,9 @@ model Section {
 model Bridge {
   id             Int             @id @default(autoincrement())
   pk_code        String          @unique
+
+  teams Team[]
+  employeeAttendance EmployeeAttendance[]
 
   bridgeType     BridgeType      @default(BRIDGE)
 
@@ -263,6 +282,7 @@ model DailyReport {
 
   // Daily attendance
   employeeAttendance EmployeeAttendance[]
+  usages EquipmentUsage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -277,8 +297,7 @@ model DailyTask {
   dailyReport   DailyReport @relation(fields: [dailyReportId], references: [id])
 
   crewId Int
-  crew Crew @relation(fields: [crewId], references: [id], onDelete: Cascade)
-
+  crew Crew @relation(fields: [crewId], references: [id])
 
   bridgeId Int
   bridge   Bridge @relation(fields: [bridgeId], references: [id])
@@ -307,7 +326,7 @@ model DailyTask {
   updatedAt DateTime @updatedAt
 
   @@index([dailyReportId])
-  @@index([dailyCrewId])
+  @@index([crewId])
   @@index([bridgeId])
 }
 
@@ -327,14 +346,20 @@ model Equipment {
 model EquipmentUsage {
   id Int @id @default(autoincrement())
 
+  dailyReportId Int
+  dailyReport DailyReport @relation(fields:[dailyReportId], references:[id])
+
+  employeeAttendanceId Int
+  employeeAttendance EmployeeAttendance @relation(fields:[employeeAttendanceId], references:[id])
+        
   equipmentId Int
   equipment   Equipment @relation(fields: [equipmentId], references: [id])
 
-  operatorId Int?
-  operator   Employee? @relation("EquipmentOperator", fields: [operatorId], references: [id])
+  // operatorId Int?
+  // operator   Employee? @relation("EquipmentOperator", fields: [operatorId], references: [id])
 
-  crewMemberId Int?
-  crewMember CrewMember? @relation(fields: [crewMemberId], references: [id])
+  // crewMemberId Int?
+  // crewMember CrewMember? @relation(fields: [crewMemberId], references: [id])
 
   // Meter readings
   startReading Float
@@ -352,8 +377,8 @@ model EquipmentUsage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([dailyCrewId])
-  @@index([equipmentId])
+  // @@index([crewId])
+  // @@index([equipmentId])
 }
 
 model WeeklyPlan {

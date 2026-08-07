@@ -1,121 +1,168 @@
+// src/lib/excel/dailyReportImporter.ts
+
 import * as XLSX from "xlsx";
+
+import { DailyReportState, CrewRow } from "@/components/daily-report/types";
+
+import { findAnchors } from "./findAnchors";
+
+import { parseGeneralInfo } from "./parseGeneralInfo";
+import { parseAttendance } from "./parseAttendance";
+import { parseEquipment } from "./parseEquipment";
+import { parseCrewDeployment } from "./parseCrewDeployment";
+import { parseTaskSummary } from "./parseTaskSummary";
+
+import { resolveCrewMembers } from "./resolveCrewMembers";
+import { resolveEquipment } from "./resolveEquipment";
+import { resolveTasks } from "./resolveTasks";
+
+/* ==========================================================
+   Parse Daily Report Excel
+========================================================== */
 
 export async function parseDailyReportExcel(
   file: File
-) {
+): Promise<DailyReportState> {
+
+  /* ==========================================================
+     Read Workbook
+  ========================================================== */
+
   const workbook = XLSX.read(
     await file.arrayBuffer()
   );
 
   const sheet =
-    workbook.Sheets[
-      workbook.SheetNames[0]
-    ];
+    workbook.Sheets[workbook.SheetNames[0]];
 
-  const rows: any[][] =
-    XLSX.utils.sheet_to_json(sheet, {
-      header: 1,
-      defval: "",
-    });
+  /* ==========================================================
+     Locate Sections
+  ========================================================== */
 
-  const generalInfo = {
-    date: rows[2]?.[1] || "",
-    weather: rows[2]?.[4] || "",
-    siteEngineer: rows[4]?.[1] || "",
-    foreman: rows[4]?.[4] || "",
-    projectManager: "",
-  };
+  const anchors = findAnchors(sheet);
 
-  const manpower = [];
+  /* ==========================================================
+     Parse Workbook
+  ========================================================== */
 
-  let manpowerStart = 9;
+  const importedGeneralInfo =
+    parseGeneralInfo(sheet, anchors);
 
-  while (
-    manpowerStart < rows.length &&
-    rows[manpowerStart]?.[0] !== ""
-  ) {
-    manpower.push({
-      staffId:
-        rows[manpowerStart][0] || "",
+  const importedAttendance =
+    parseAttendance(sheet, anchors);
 
-      employeeName:
-        rows[manpowerStart][1] || "",
+  const importedEquipment =
+    parseEquipment(sheet, anchors);
 
-      teamId:
-        String(
-          rows[manpowerStart][2] || ""
-        ),
+  const importedCrewDeployment =
+    parseCrewDeployment(sheet, anchors);
 
-      hoursWorked:
-        Number(
-          rows[manpowerStart][3] || 0
-        ),
+  const importedTasks =
+    parseTaskSummary(sheet, anchors);
 
-      remarks:
-        rows[manpowerStart][4] || "",
+  /* ==========================================================
+     Build Initial Crews
+  ========================================================== */
 
-      employeeId: null,
+  const crewMap = new Map<string, CrewRow>();
 
-      manualEmployee: true,
+  importedCrewDeployment.forEach((row) => {
 
-      equipmentId: "",
-    });
+    if (!crewMap.has(row.crewCode)) {
 
-    manpowerStart++;
-  }
+      crewMap.set(row.crewCode, {
 
-  const activities = [];
+        id: 0,
 
-  let activityStart = 16;
+        crewCode: row.crewCode,
 
-  while (
-    activityStart < rows.length
-  ) {
-    const row =
-      rows[activityStart];
+        teamId: undefined,
 
-    if (
-      !row ||
-      row.every(
-        (cell) =>
-          cell === ""
-      )
-    ) {
-      activityStart++;
-      continue;
+        active: true,
+
+        remarks: "",
+
+        members: [],
+
+        tasks: [],
+
+        equipment: [],
+
+      });
+
     }
 
-    activities.push({
-      teamId:
-        String(row[0] || ""),
+  });
 
-      activity:
-        row[1] || "",
+  let crews = Array.from(
+    crewMap.values()
+  );
 
-      pier:
-        row[2] || "",
+  /* ==========================================================
+     Resolve Crew Members
+  ========================================================== */
 
-      elementId:
-        Number(row[3] || 0),
+  crews = resolveCrewMembers(
 
-      quantity:
-        Number(row[4] || 0),
+    crews,
 
-      unit:
-        row[5] || "",
+    importedAttendance,
 
-      grade:
-        row[6] || "",
+    importedCrewDeployment
 
-      bridge: "",
-    });
+  );
 
-    activityStart++;
-  }
+  /* ==========================================================
+     Resolve Equipment
+  ========================================================== */
+
+  crews = resolveEquipment(
+
+    crews,
+
+    importedEquipment
+
+  );
+
+  /* ==========================================================
+     Resolve Tasks
+  ========================================================== */
+
+  crews = resolveTasks(
+
+    crews,
+
+    importedTasks
+
+  );
+
+  /* ==========================================================
+     Return Daily Report
+  ========================================================== */
 
   return {
-    generalInfo,
-    manpower,
-    activities,
+
+    generalInfo:
+      importedGeneralInfo.generalInfo,
+
+    /*
+      Bridge will be resolved
+      after merging with the
+      application's master data.
+    */
+
+    bridgeId: 0,
+
+    attendance:
+
+      importedAttendance.map(
+
+        (row) => row.attendance
+
+      ),
+
+    crews,
+
   };
+
 }

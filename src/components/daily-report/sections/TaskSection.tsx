@@ -17,6 +17,8 @@ export default function TaskSection({
 
     piers,
 
+    availableCrews,
+
     addTask,
 
     updateTask,

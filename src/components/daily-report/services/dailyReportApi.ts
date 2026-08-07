@@ -1,7 +1,10 @@
+// src\components\daily-report\services\dailyReportApi.ts
+
 import {
   ActivityRow,
   DailyReportPayload,
   Employee,
+  EmployeeAttendanceRow,
   Team,
   Bridge,
   Element,
@@ -24,7 +27,15 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     throw new Error(data.error || "Request failed");
   }
 
-  return data;
+  if (
+    data &&
+    typeof data === "object" &&
+    "data" in data
+  ) {
+    return data.data as T;
+  }
+
+  return data as T;
 }
 
 /* ---------------------------------------------------- */
@@ -69,6 +80,9 @@ export const getAvailableEmployees = (bridgeId: number) =>
 export const getEmployeesOnMission = (bridgeId: number) =>
   request<Employee[]>(`/api/employees/mission?bridgeId=${bridgeId}`);
 
+export const getBridgeEmployees = (bridgeId: number) =>
+  request<EmployeeAttendanceRow[]>(`/api/bridges/${bridgeId}/employees`);
+
 // export const getTeamMembers = (
 //   teamId: number
 // ) =>
@@ -80,12 +94,15 @@ export const getEmployeesOnMission = (bridgeId: number) =>
 /* Daily Reports                                         */
 /* ---------------------------------------------------- */
 
-export const createDailyReport = (body: DailyReportPayload) =>
-  request("/api/daily-reports", {
+export async function createDailyReport(payload: DailyReportPayload) {
+  return request("/api/daily-reports", {
     method: "POST",
+
     headers: JSON_HEADERS,
-    body: JSON.stringify(body),
+
+    body: JSON.stringify(payload),
   });
+}
 
 export const updateDailyReport = (id: number, body: DailyReportPayload) =>
   request(`/api/daily-reports/${id}`, {

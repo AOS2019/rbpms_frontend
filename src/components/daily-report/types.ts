@@ -69,9 +69,21 @@ export interface EmployeeAttendanceRow {
 
   trade?: string;
 
-  designation?: string;
+  permanentCrewId?: number;
+
+  permanentCrewCode?: string;
 
   attendanceStatus: AttendanceStatus;
+
+  assignedCrewId?: number;
+
+  assignedCrewCode?: string;
+
+  assignedBridgeId?: number;
+
+  // hoursWorked: number;
+
+  borrowed: boolean;
 
   remarks?: string;
 }
@@ -132,6 +144,8 @@ export interface EquipmentUsageRow {
   equipmentId: number | "";
 
   operatorId: number | "";
+
+  employeeAttendanceId?: number;
 
   crewId: number;
 

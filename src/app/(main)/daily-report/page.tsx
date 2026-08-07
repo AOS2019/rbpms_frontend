@@ -43,7 +43,7 @@ export default function DailyReportPage() {
         <div className="flex justify-end mt-8">
           <button
             type="button"
-            onClick={report.save}
+            onClick={report.saveReport}
             disabled={report.saving}
             className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-lg"
           >

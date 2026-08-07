@@ -21,8 +21,6 @@ export default function CrewDeploymentSection({
 
     populateCrewMembers,
 
-    addBorrowedCrewMember,
-
     updateCrewMember,
 
     removeCrewMember,
@@ -37,7 +35,7 @@ export default function CrewDeploymentSection({
 
       actions={
 
-        <button type="button" onClick={() => addCrew({} as any)}>
+        <button type="button" onClick={() => addCrew ({} as any)}>
 
           Add Crew
 

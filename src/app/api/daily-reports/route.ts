@@ -1,5 +1,8 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+// src\app\api\daily-reports\route.ts
+
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { DailyReportPayload } from "@/components/daily-report/types";
 
 /**
  * GET - fetch all daily reports (for dashboard)
@@ -13,7 +16,7 @@ export async function GET() {
         tasks: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
 
@@ -22,14 +25,14 @@ export async function GET() {
       data: reports,
     });
   } catch (error) {
-    console.error('GET /api/daily-reports error:', error);
+    console.error("GET /api/daily-reports error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to fetch reports',
+        error: "Failed to fetch reports",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -39,110 +42,43 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   try {
-    const quantityRequiredActivities = [
-      "casting",
-      "blinding",
-      "installation",
-      "assembly",
-    ];
+    const payload: DailyReportPayload = await req.json();
 
-    const body = await req.json();
+    const report = await prisma.$transaction(async (tx) => {
+      return await tx.dailyReport.create({
+        data: {
+          date: new Date(payload.generalInfo.date),
+          siteEngineer: payload.generalInfo.siteEngineer,
+          foreman: payload.generalInfo.foreman,
+          projectManager: payload.generalInfo.projectManager,
+          weather: payload.generalInfo.weather,
+          bridgeId: payload.bridgeId,
+        },
+      });
 
-    const report = await prisma.dailyReport.create({
-      data: {
-        date: new Date(body.date),
-        siteEngineer: body.siteEngineer,
-        foreman: body.foreman,
-        projectManager: body.projectManager,
-        weather: body.weather,
+      // Attendance
+      for (const employee of payload.attendance) {
+        await tx.employeeAttendance.create({
+          data: {
+            dailyReportId: report.id,
 
-        bridge: {
-          connect: {
-            id: body.bridgeId,
+            employeeId: employee.employeeId,
+
+            attendanceStatus: employee.attendanceStatus,
+
+            remarks: employee.remarks,
           },
-        },
+        });
+      }
 
-        activities: {
-          create: body.activities.map((act: any) => ({
+      // Crews
 
-            activity: act.activity,
+      // Tasks
 
-            team: {
-              connect: {
-                id: Number(act.teamId),
-              },
-            },
-
-            bridge: {
-              connect: {
-                id: Number(body.bridgeId),
-              },
-            },
-
-            pierNumber: act.pier || null,
-
-            quantityDone: 
-              act.quantity && act.quantity > 0
-              ? Number(act.quantity)
-              : null,
-            unit: act.unit || '',
-            concreteGrade: act.concreteGrade || null,
-            status: 'pending',
-
-            ...(act.elementId
-              ? {
-                  element: {
-                    connect: {
-                      id: Number(act.elementId),
-                    },
-                  },
-                }
-              : {}
-            ),
-          })),
-        },
-
-        dailyTeamTasks: {
-          create: (body.manpower || []).map((task: any) => ({
-            employeeId: task.employeeId,
-            teamId: task.teamId,
-            bridgeId: body.bridgeId,
-
-            hoursWorked: task.hoursWorked,
-            remarks: task.remarks,
-
-            equipmentUsages: {
-              create: (task.equipmentUsages || []).map((eq: any) => ({
-                equipmentId: eq.equipmentId,
-
-                operatorId: eq.operatorId,
-
-                startReading: Number(eq.startReading),
-
-                endReading: Number(eq.endReading),
-
-                totalReading:
-                  Number(eq.endReading) -
-                  Number(eq.startReading),
-
-                standbyHours: Number(eq.standbyHours),
-
-                breakdownHours: Number(eq.breakdownHours),
-              })),
-            },
-          })),
-        },
-      },
-      include: {
-        activities: true,
-        dailyTeamTasks: true,
-      },
+      // Equipment
     });
 
-    return NextResponse.json({
-      success: true,
-      data: report,
-    });
+    return NextResponse.json({ success: true, data: report }, { status: 201 });
   } catch (error: any) {
     console.error(error);
 
@@ -157,16 +93,16 @@ export async function POST(req: Request) {
           error:
             "Database connection is temporarily unavailable. Please try again in a few moments.",
         },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to create report',
+        error: "Failed to create report",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

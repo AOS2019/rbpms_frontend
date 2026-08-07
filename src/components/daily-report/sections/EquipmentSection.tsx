@@ -14,6 +14,8 @@ export default function EquipmentSection({
   const {
 
     equipment,
+    
+    availableOperators,
 
     addEquipment,
 

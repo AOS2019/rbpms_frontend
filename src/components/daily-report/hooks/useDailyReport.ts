@@ -1,4 +1,9 @@
+// src\components\daily-report\hooks\useDailyReport.ts
+
 "use client";
+
+import { parseDailyReportExcel } from "@/lib/excel/dailyReportImporter";
+import { mergeImportedReport } from "@/lib/excel/mergeImportedReport";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -25,6 +30,8 @@ import {
   getBridgePiers,
   getBridgeCrews,
   createDailyReport,
+  getBridgeEmployees,
+  importWeeklyPlanTasks,
 } from "../services/dailyReportApi";
 
 import {
@@ -187,6 +194,53 @@ export function useDailyReport() {
   }, [report.bridgeId]);
 
   /* ==========================================================
+    Populate Crew Members
+========================================================== */
+
+  function populateCrewMembers() {
+    setReport((prev) => {
+      const crews = prev.crews.map((crew) => ({
+        ...crew,
+
+        members: prev.attendance
+          .filter(
+            (employee) =>
+              employee.assignedCrewId === crew.id &&
+              employee.attendanceStatus === "PRESENT",
+          )
+          .map(
+            (employee): CrewMemberRow => ({
+              id: employee.employeeId,
+
+              crewMemberId: employee.employeeId,
+
+              employeeId: employee.employeeId,
+
+              staffId: employee.staffId,
+
+              employeeName: employee.employeeName,
+
+              trade: employee.trade,
+
+              hoursWorked: 0,
+
+              // hoursWorked: employee.hoursWorked,
+
+              remarks: employee.remarks,
+
+              equipment: [],
+            }),
+          ),
+      }));
+
+      return {
+        ...prev,
+        crews,
+      };
+    });
+  }
+
+  /* ==========================================================
         Add Crew
   ========================================================== */
   function addCrew(crew: CrewOption) {
@@ -213,61 +267,6 @@ export function useDailyReport() {
       };
     });
   }
-  /* ==========================================================
-        Remove Crew
-  ========================================================== */
-
-  function removeCrew(crewId: number) {
-    setReport((prev) => ({
-      ...prev,
-      crews: prev.crews.filter((c) => Number(c.id) !== crewId),
-    }));
-  }
-
-  /* ==========================================================
-      Populate Crew Members
-  ========================================================== */
-
-  async function populateCrewMembers(crewId: number) {
-    const members = (await getCrewMembers(crewId)) as Employee[];
-
-    setReport((prev) => {
-      const crews = [...prev.crews];
-
-      const crew = crews.find((c) => Number(c.id) === crewId);
-
-      if (!crew) return prev;
-
-      crew.members = members.map(
-        (employee): CrewMemberRow => ({
-          id: Number(`${crewId}-${employee.id}`),
-
-          crewMemberId: employee.id,
-
-          employeeId: employee.id,
-
-          staffId: employee.staffId,
-
-          employeeName: `${employee.firstName} ${employee.lastName}`,
-
-          trade: employee.trade,
-
-          hoursWorked: 10,
-
-          remarks: "",
-
-          equipment: [],
-        }),
-      );
-
-      return {
-        ...prev,
-        crews,
-      };
-    });
-
-    updateAttendanceForCrew(members);
-  }
 
   /* ==========================================================
         Remove Crew Member
@@ -293,40 +292,50 @@ export function useDailyReport() {
       };
     });
   }
+  /* ==========================================================
+        Remove Crew
+  ========================================================== */
+
+  function removeCrew(crewId: number) {
+    setReport((prev) => ({
+      ...prev,
+      crews: prev.crews.filter((c) => Number(c.id) !== crewId),
+    }));
+  }
 
   /* ==========================================================
         Add Borrowed Crew Member
   ========================================================== */
 
-  function addBorrowedCrewMember(crewId: number, member: CrewMemberRow) {
-    setReport((prev) => {
-      const crews = [...prev.crews];
+  // function addBorrowedCrewMember(crewId: number, member: CrewMemberRow) {
+  //   setReport((prev) => {
+  //     const crews = [...prev.crews];
 
-      const crew = crews.find((c) => c.id === crewId);
+  //     const crew = crews.find((c) => c.id === crewId);
 
-      if (!crew) return prev;
+  //     if (!crew) return prev;
 
-      crew.members.push(member);
+  //     crew.members.push(member);
 
-      const attendance = [...prev.attendance];
+  //     const attendance = [...prev.attendance];
 
-      const attendanceRow = attendance.find(
-        (a) => a.employeeId === member.employeeId,
-      );
+  //     const attendanceRow = attendance.find(
+  //       (a) => a.employeeId === member.employeeId,
+  //     );
 
-      if (attendanceRow) {
-        attendanceRow.attendanceStatus = "PRESENT";
-      }
+  //     if (attendanceRow) {
+  //       attendanceRow.attendanceStatus = "PRESENT";
+  //     }
 
-      return {
-        ...prev,
+  //     return {
+  //       ...prev,
 
-        crews,
+  //       crews,
 
-        attendance,
-      };
-    });
-  }
+  //       attendance,
+  //     };
+  //   });
+  // }
 
   /* ==========================================================
         Update Crew Member
@@ -360,48 +369,291 @@ export function useDailyReport() {
   }
 
   /* ==========================================================
-      Attendance Initialization
+        Load Bridge Employee
   ========================================================== */
+  async function loadBridgeEmployees(bridgeId: number) {
+    const employees = await getBridgeEmployees(bridgeId);
 
-  const initializeAttendance = useCallback(() => {
-    const attendance: EmployeeAttendanceRow[] = employees.map((employee) => ({
-      employeeId: employee.id,
-      staffId: employee.staffId,
-      employeeName: `${employee.firstName} ${employee.lastName}`,
-      trade: employee.trade,
-      designation: employee.designation,
-      attendanceStatus: "ABSENT",
-      remarks: "",
-    }));
+    setReport((prev) => {
+      const attendance = employees;
 
-    setReport((prev) => ({
-      ...prev,
-      attendance,
-    }));
-  }, [employees]);
+      const crews = prev.crews.map((crew) => ({
+        ...crew,
 
-  useEffect(() => {
-    if (employees.length > 0) {
-      initializeAttendance();
-    }
-  }, [employees, initializeAttendance]);
+        members: attendance
+          .filter(
+            (employee) =>
+              employee.assignedCrewId === crew.id &&
+              employee.attendanceStatus === "PRESENT",
+          )
+          .map((employee) => ({
+            id: employee.employeeId,
+            crewMemberId: employee.employeeId,
+            employeeId: employee.employeeId,
+            staffId: employee.staffId,
+            employeeName: employee.employeeName,
+            trade: employee.trade,
+            hoursWorked: 0,
+            // hoursWorked: employee.hoursWorked,
+            remarks: employee.remarks,
+            equipment: [],
+          })),
+      }));
+
+      return {
+        ...prev,
+        attendance,
+        crews,
+      };
+    });
+  }
 
   /* ==========================================================
-      Attendance
+        Borrow Employee
+  ========================================================== */
+  function borrowEmployee(
+    employee: EmployeeAttendanceRow,
+    bridgeId: number,
+    crewId: number,
+  ) {
+    setReport((prev) => ({
+      ...prev,
+
+      attendance: [
+        ...prev.attendance,
+        {
+          ...employee,
+
+          borrowed: true,
+
+          assignedBridgeId: bridgeId,
+
+          assignedCrewId: crewId,
+
+          attendanceStatus: "PRESENT",
+        },
+      ],
+    }));
+  }
+
+  /* ==========================================================
+      Assign Employee To Crew
+  ========================================================== */
+
+  function assignEmployeeToCrew(employeeId: number, crewId: number) {
+    setReport((prev) => {
+      const attendance = prev.attendance.map((employee) =>
+        employee.employeeId === employeeId
+          ? {
+              ...employee,
+              assignedCrewId: crewId,
+            }
+          : employee,
+      );
+
+      const crews = prev.crews.map((crew) => ({
+        ...crew,
+        members: attendance
+          .filter(
+            (employee) =>
+              employee.assignedCrewId === crew.id &&
+              employee.attendanceStatus === "PRESENT",
+          )
+          .map(
+            (employee): CrewMemberRow => ({
+              id: employee.employeeId,
+
+              crewMemberId: employee.employeeId,
+
+              employeeId: employee.employeeId,
+
+              staffId: employee.staffId,
+
+              employeeName: employee.employeeName,
+
+              trade: employee.trade,
+
+              hoursWorked: 0,
+
+              remarks: employee.remarks,
+
+              equipment: [],
+            }),
+          ),
+      }));
+
+      return {
+        ...prev,
+        attendance,
+        crews,
+      };
+    });
+  }
+
+  /* ==========================================================
+        Add Borrowed Employee
+  ========================================================== */
+
+  function addBorrowedEmployee(
+    employee: EmployeeAttendanceRow,
+    crewId: number,
+  ) {
+    setReport((prev) => {
+      const borrowedEmployee: EmployeeAttendanceRow = {
+        ...employee,
+
+        borrowed: true,
+
+        assignedCrewId: crewId,
+
+        attendanceStatus: "PRESENT",
+      };
+      const attendance = [...prev.attendance, borrowedEmployee];
+
+      const crews = prev.crews.map((crew) => ({
+        ...crew,
+
+        members: attendance
+          .filter(
+            (employee) =>
+              employee.assignedCrewId === crew.id &&
+              employee.attendanceStatus === "PRESENT",
+          )
+          .map(
+            (employee): CrewMemberRow => ({
+              id: employee.employeeId,
+              crewMemberId: employee.employeeId,
+              employeeId: employee.employeeId,
+              staffId: employee.staffId,
+              employeeName: employee.employeeName,
+              trade: employee.trade,
+              hoursWorked: 0,
+              remarks: employee.remarks,
+              equipment: [],
+            }),
+          ),
+      }));
+
+      return {
+        ...prev,
+        attendance,
+        crews,
+      };
+    });
+  }
+  /* ==========================================================
+      Remove Borrowed Employee
+  ========================================================== */
+  function removeBorrowedEmployee(employeeId: number) {
+    setReport((prev) => {
+      const attendance = prev.attendance.filter(
+        (employee) =>
+          !(employee.employeeId === employeeId && employee.borrowed),
+      );
+
+      const crews = prev.crews.map((crew) => ({
+        ...crew,
+
+        members: attendance
+          .filter(
+            (employee) =>
+              employee.assignedCrewId === crew.id &&
+              employee.attendanceStatus === "PRESENT",
+          )
+          .map(
+            (employee): CrewMemberRow => ({
+              id: employee.employeeId,
+              crewMemberId: employee.employeeId,
+              employeeId: employee.employeeId,
+              staffId: employee.staffId,
+              employeeName: employee.employeeName,
+              trade: employee.trade,
+              hoursWorked: 0,
+              remarks: employee.remarks,
+              equipment: [],
+            }),
+          ),
+      }));
+
+      return {
+        ...prev,
+        attendance,
+        crews,
+      };
+    });
+  }
+
+  /* ==========================================================
+      Attendance Initialization
+  ========================================================== */
+  function buildCrewsFromAttendance(
+    crews: CrewRow[],
+    attendance: EmployeeAttendanceRow[],
+  ): CrewRow[] {
+    return crews.map((crew) => ({
+      ...crew,
+      members: attendance
+        .filter(
+          (employee) =>
+            employee.assignedCrewId === crew.id &&
+            employee.attendanceStatus === "PRESENT",
+        )
+        .map(
+          (employee): CrewMemberRow => ({
+            id: employee.employeeId,
+            crewMemberId: employee.employeeId,
+            employeeId: employee.employeeId,
+            staffId: employee.staffId,
+            employeeName: employee.employeeName,
+            trade: employee.trade,
+            hoursWorked: 0,
+            remarks: employee.remarks,
+            equipment: [],
+          }),
+        ),
+    }));
+  }
+  // const initializeAttendance = useCallback(() => {
+  //   const attendance: EmployeeAttendanceRow[] = employees.map((employee) => ({
+  //     employeeId: employee.id,
+  //     staffId: employee.staffId,
+  //     employeeName: `${employee.firstName} ${employee.lastName}`,
+  //     trade: employee.trade,
+  //     designation: employee.designation,
+  //     attendanceStatus: "ABSENT",
+  //     remarks: "",
+  //   }));
+
+  //   setReport((prev) => ({
+  //     ...prev,
+  //     attendance,
+  //   }));
+  // }, [employees]);
+
+  // useEffect(() => {
+  //   if (employees.length > 0) {
+  //     initializeAttendance();
+  //   }
+  // }, [employees, initializeAttendance]);
+
+  /* ==========================================================
+      Update Attendance
   ========================================================== */
 
   function updateAttendance(
-    index: number,
+    employeeId: number,
     field: keyof EmployeeAttendanceRow,
     value: EmployeeAttendanceRow[keyof EmployeeAttendanceRow],
   ) {
     setReport((prev) => {
-      const attendance = [...prev.attendance];
-
-      attendance[index] = {
-        ...attendance[index],
-        [field]: value,
-      };
+      const attendance = prev.attendance.map((employee) =>
+        employee.employeeId === employeeId
+          ? {
+              ...employee,
+              [field]: value,
+            }
+          : employee,
+      );
 
       return {
         ...prev,
@@ -449,13 +701,14 @@ export function useDailyReport() {
   /* ==========================================================
       Helpers for Updating Report and Crew Equipment State
   ========================================================== */
-
+  /* Report Updates */
   function updateReport(
     updater: (draft: DailyReportState) => DailyReportState,
   ) {
     setReport((prev) => updater(prev));
   }
 
+  /* Crew Updates */
   function updateCrew(crewId: number, updater: (crew: CrewRow) => void) {
     updateReport((prev) => {
       const crews = [...prev.crews];
@@ -479,6 +732,7 @@ export function useDailyReport() {
     });
   }
 
+  /* Update Crew Array */
   function updateCrewArray<K extends "members" | "tasks" | "equipment">(
     crewId: number,
     key: K,
@@ -488,6 +742,13 @@ export function useDailyReport() {
       crew[key] = updater([...crew[key]] as CrewRow[K]);
     });
   }
+
+  /* Available Operators */
+  const availableOperators = useMemo(() => {
+    return report.attendance.filter(
+      (employee) => employee.attendanceStatus === "PRESENT",
+    );
+  }, [report.attendance]);
 
   /* ==========================================================
       Add Task
@@ -681,6 +942,10 @@ export function useDailyReport() {
         if (equipment.endReading < equipment.startReading) {
           errors.push(`${crew.crewCode}: Equipment meter reading is invalid.`);
         }
+
+        if (!equipment.equipmentId) {
+          errors.push(`${equipment.equipmentId}: Equipment not selected.`);
+        }
       });
     });
 
@@ -710,9 +975,9 @@ export function useDailyReport() {
   }
 
   /* ==========================================================
-      Save
+      Save Report
   ========================================================== */
-  async function save() {
+  async function saveReport() {
     const errors = validateReport();
 
     if (errors.length) {
@@ -739,6 +1004,67 @@ export function useDailyReport() {
   }
 
   /* ==========================================================
+    Import Daily Report Excel
+========================================================== */
+
+  async function importDailyReport(file: File) {
+    try {
+      const imported = await parseDailyReportExcel(file);
+
+      console.log({
+        bridges,
+        employees,
+        equipment,
+        availableCrews,
+      });
+
+      const merged = mergeImportedReport({
+        importedReport: imported,
+        bridges,
+        employees,
+        equipment,
+        availableCrews,
+        elements,
+        piers,
+      });
+
+      setReport(merged);
+
+      alert("Daily Report imported successfully.");
+    } catch (error) {
+      console.error(error);
+
+      alert("Failed to import Daily Report.");
+    }
+  }
+
+  /* ==========================================================
+    Import Weekly Plan
+========================================================== */
+
+  async function importWeeklyPlan(weekStart: string) {
+    if (!report.bridgeId) {
+      alert("Please select a bridge first.");
+      return;
+    }
+
+    try {
+      const tasks = await importWeeklyPlanTasks(report.bridgeId, weekStart);
+
+      setReport((prev) => ({
+        ...prev,
+        crews: prev.crews.map((crew) => ({
+          ...crew,
+          tasks: tasks.filter((task) => task.crewId === crew.id),
+        })),
+      }));
+    } catch (error) {
+      console.error(error);
+      alert("Failed to import Weekly Plan.");
+    }
+  }
+
+  /* ==========================================================
       Exposed API
   ========================================================== */
 
@@ -758,6 +1084,7 @@ export function useDailyReport() {
     piers,
     availableCrews,
     filteredElements,
+    availableOperators,
 
     /* Report */
 
@@ -768,12 +1095,22 @@ export function useDailyReport() {
     setBridge,
     updateGeneralInfo,
     updateAttendance,
+    loadBridgeEmployees,
+
+    /* Crew Assignment */
+    assignEmployeeToCrew,
+    updateAttendanceForCrew,
+    buildCrewsFromAttendance,
+
+    /* Employee Management */
+    borrowEmployee,
+    removeBorrowedEmployee,
+    addBorrowedEmployee,
 
     /* Crew Management */
     addCrew,
     removeCrew,
     populateCrewMembers,
-    addBorrowedCrewMember,
     removeCrewMember,
     updateCrewMember,
 
@@ -791,6 +1128,12 @@ export function useDailyReport() {
     validateReport,
     buildPayload,
     submitReport,
-    save,
+    saveReport,
+
+    /* Weekly Plan */
+    importWeeklyPlan,
+
+    /* Daily Report Excel */
+    importDailyReport,
   };
 }
