@@ -22,31 +22,14 @@ export async function GET(
     include: {
       bridge: true,
 
+      usage: true,
+
+      tasks: true,
+
       activities: {
         include: {
           team: true,
           element: true,
-        },
-      },
-
-      tasks: {
-        include: {
-          team: true,
-          bridge: true,
-
-          manpower: {
-            include: {
-              employee: true,
-            },
-          },
-
-          equipmentUsages: {
-            include: {
-              equipment: true,
-
-              operator: true,
-            },
-          },
         },
       },
     },
@@ -63,16 +46,23 @@ export async function GET(
     );
   }
 
+  const reportActivities = Array.isArray(report.activities)
+    ? (report.activities as Array<any>)
+    : [];
+
+  // Generate Excel file
   const workbook = await exportDailyReportExcel({
   ...report,
 
-  manpower: report.tasks.flatMap((task) =>
-    task.manpower.map((m) => ({
+  task: report.tasks.flatMap((task) => {
+    const crewAssignments = Array.isArray(task.crewId) ? task.crewId : [];
+
+    return crewAssignments.map((m) => ({
       staffId: m.employee.staffId,
 
       employeeName: `${m.employee.firstName} ${m.employee.lastName}`,
 
-      teamName: task.team.name,
+      crewName: task.crewId,
 
       activity: task.activity,
 
@@ -81,20 +71,24 @@ export async function GET(
       hoursWorked: m.hoursWorked,
 
       remarks: m.remarks,
-    }))
-  ),
+    }));
+  }),
 
-  equipment: report.tasks.flatMap((task) =>
-    task.equipmentUsages.map((e) => ({
+  equipment: report.tasks.flatMap((task: any) => {
+    const equipmentUsages = Array.isArray((task as any).equipmentUsages)
+      ? (task as any).equipmentUsages
+      : [];
+
+    return equipmentUsages.map((e: any) => ({
       task: task.activity,
 
       locationCode: task.locationCode,
 
-      teamName: task.team.name,
+      crewName: task.crewId,
 
-      equipmentCode: e.equipment.equipmentCode,
+      equipmentCode: e.equipment?.equipmentCode ?? "",
 
-      equipmentName: e.equipment.name,
+      equipmentName: e.equipment?.name ?? "",
 
       operator: e.operator
         ? `${e.operator.firstName} ${e.operator.lastName}`
@@ -113,10 +107,10 @@ export async function GET(
       fuelUsed: e.fuelUsed,
 
       remarks: e.remarks,
-    }))
-  ),
+    }));
+  }),
 
-  activities: report.activities.map((a) => ({
+  activities: reportActivities.map((a) => ({
     teamName: a.team.name,
 
     activity: a.activity,
