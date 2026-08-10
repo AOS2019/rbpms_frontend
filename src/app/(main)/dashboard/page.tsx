@@ -1,10 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 export default function Dashboard() {
-
-  // 
+  //
   const [currentUser, setCurrentUser] = useState<any>(null);
   useEffect(() => {
     fetch("/api/auth/me")
@@ -17,7 +16,6 @@ export default function Dashboard() {
       .catch(console.error);
   }, []);
 
-
   const [stats, setStats] = useState({
     totalBridges: 0,
     onTrack: 0,
@@ -27,21 +25,21 @@ export default function Dashboard() {
   const [reports, setReports] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-    pk_code: '',
-    location: '',
-    sectionId: null as number | null
+    pk_code: "",
+    location: "",
+    sectionId: null as number | null,
   });
   const [sections, setSections] = useState([]);
   useEffect(() => {
     fetch("/api/sections")
-      .then(res => res.json())
-      .then(data => setSections(data.data || []));
+      .then((res) => res.json())
+      .then((data) => setSections(data.data || []));
   }, []);
 
   useEffect(() => {
-    fetch('/api/daily-reports')
-      .then(res => res.json())
-      .then(data => {
+    fetch("/api/daily-reports")
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success) {
           setReports(data.data);
         }
@@ -73,7 +71,10 @@ export default function Dashboard() {
           </div>
           <div>
             <p className="text-lg sm:mt-0 sm:ml-4 sm:flex sm:items-center sm:justify-end sm:space-x-2 sm:space-x-reverse">
-              Welcome <span className="ml-2 font-bold">{currentUser?.name || "User"}</span>
+              Welcome{" "}
+              <span className="ml-2 font-bold">
+                {currentUser?.name || "User"}
+              </span>
             </p>
           </div>
 
@@ -197,16 +198,30 @@ export default function Dashboard() {
               <tbody className="divide-y divide-gray-100">
                 {reports.map((report) => (
                   <tr key={report.id} className="text-sm text-gray-700">
-                    <td className="py-3 px-3 align-top">{new Date(report.date).toLocaleDateString()}</td>
-                    <td className="py-3 px-3 align-top">{report.siteEngineer}</td>
+                    <td className="py-3 px-3 align-top">
+                      {new Date(report.date).toLocaleDateString()}
+                    </td>
+                    <td className="py-3 px-3 align-top">
+                      {report.siteEngineer}
+                    </td>
                     <td className="py-3 px-3 align-top">{report.weather}</td>
                     <td className="py-3 px-3 align-top">{report.foreman}</td>
-                    <td className="py-3 px-3 align-top">{report.bridge?.pk_code}</td>
+                    <td className="py-3 px-3 align-top">
+                      {report.bridge?.pk_code}
+                    </td>
                     <td className="py-3 px-3 align-top">
                       <ul className="list-disc list-inside">
-                        {report.activities.map((act: any) => (
-                          <li key={act.id}>
-                            {act.activity} - {act.quantityDone} {act.unit} {act.concreteGrade ? `(Grade: ${act.concreteGrade})` : null}
+                        {(report.tasks ?? []).map((task: any) => (
+                          <li key={task.id}>
+                            {task.activity}
+
+                            {task.locationCode && ` (${task.locationCode})`}
+
+                            {task.quantityDone != null &&
+                              ` - ${task.quantityDone} ${task.unit ?? ""}`}
+
+                            {task.concreteGrade &&
+                              ` (Grade: ${task.concreteGrade})`}
                           </li>
                         ))}
                       </ul>
@@ -214,9 +229,7 @@ export default function Dashboard() {
                     <td>
                       <button
                         onClick={() =>
-                          window.open(
-                            `/api/daily-reports/${report.id}/excel`
-                          )
+                          window.open(`/api/daily-reports/${report.id}/excel`)
                         }
                         className="bg-blue-300 text-white px-3 py-2 rounded hover:bg-blue-600"
                       >

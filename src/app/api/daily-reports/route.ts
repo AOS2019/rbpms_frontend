@@ -17,7 +17,12 @@ export async function GET() {
 
         usages: true,
 
-        tasks: true,
+        tasks: {
+          include: {
+            crew: true,
+            element: true,
+          },
+        },
       },
 
       orderBy: {
