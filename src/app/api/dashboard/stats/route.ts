@@ -1,3 +1,5 @@
+//src\app\api\dashboard\stats\route.ts
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -11,9 +13,12 @@ export async function GET() {
       bridges,
     ] = await Promise.all([
       prisma.bridge.count(),
+
       prisma.dailyReport.count(),
-      prisma.dailyActivity.count(),
+
       prisma.dailyTask.count(),
+
+      prisma.employeeAttendance.count(),
 
       prisma.bridge.findMany({
         select: {
@@ -26,17 +31,13 @@ export async function GET() {
     const onTrack = bridges.filter((b) => {
       if (!b.totalPlanned) return false;
 
-      return (
-        (b.totalCompleted / b.totalPlanned) * 100 >= 80
-      );
+      return (b.totalCompleted / b.totalPlanned) * 100 >= 80;
     }).length;
 
     const delayed = bridges.filter((b) => {
       if (!b.totalPlanned) return false;
 
-      return (
-        (b.totalCompleted / b.totalPlanned) * 100 < 80
-      );
+      return (b.totalCompleted / b.totalPlanned) * 100 < 80;
     }).length;
 
     return NextResponse.json({
