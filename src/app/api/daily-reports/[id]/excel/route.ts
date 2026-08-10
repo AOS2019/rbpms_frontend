@@ -10,7 +10,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ id: string }>;
-  }
+  },
 ) {
   const { id } = await params;
 
@@ -58,7 +58,7 @@ export async function GET(
       },
       {
         status: 404,
-      }
+      },
     );
   }
 
@@ -71,8 +71,7 @@ export async function GET(
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-      "Content-Disposition":
-        `attachment; filename=DailyReport-${report.id}.xlsx`,
+      "Content-Disposition": `attachment; filename=DailyReport-${report.id}.xlsx`,
     },
   });
 }

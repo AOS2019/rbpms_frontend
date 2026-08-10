@@ -12,11 +12,16 @@ export async function GET() {
     const reports = await prisma.dailyReport.findMany({
       include: {
         bridge: true,
-        activities: true,
+
+        employeeAttendance: true,
+
+        usages: true,
+
         tasks: true,
       },
+
       orderBy: {
-        createdAt: "desc",
+        date: "desc",
       },
     });
 
